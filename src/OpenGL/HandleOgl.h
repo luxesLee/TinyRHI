@@ -3,17 +3,17 @@
 
 namespace TinyRHI
 {
-    class VkHandle : public IRHIHandle
+    class HandleOgl : public IRHIHandle
     {
     public:
-        VkHandle();
-        ~VkHandle();
-        VkHandle(const VkHandle&) = delete;
-        VkHandle& operator=(const VkHandle&) = delete;
+        HandleOgl();
+        ~HandleOgl();
+        HandleOgl(const HandleOgl&) = delete;
+        HandleOgl& operator=(const HandleOgl&) = delete;
 
         // 
         // ------------------------------------------------------------------------------------------------
-        virtual IGraphicsPipeline* CreateGrpahicsPipeline(const GraphicsPipelineDesc& renderPipelineDesc);
+        virtual IGraphicsPipeline* CreateGrpahicsPipeline(const GraphicsPipelineDesc& gfxPipelineDesc);
 		virtual IComputePipeline* CreateComputePipeline(const ComputePipelineDesc& computePipelineDesc);
 
 		virtual IShader* CreateVertexShader(ShaderDesc& shaderDesc);
@@ -32,8 +32,8 @@ namespace TinyRHI
         // 
         // ------------------------------------------------------------------------------------------------
 
-		//virtual void BeginRenderPass(RenderPass* renderPass, FrameBuffer* framebuffer) = 0;
-		//virtual void EndRenderPass() = 0;
+		virtual void BeginRenderPass() = 0;
+		virtual void EndRenderPass() = 0;
 
 		virtual void SetGraphicsPipelineState() = 0;
 		virtual void SetComputePipelineState() = 0;
@@ -41,10 +41,6 @@ namespace TinyRHI
 		virtual void SetVertexStream() = 0;
 		virtual void SetViewport(Extent3D minExt, Extent3D maxExt) = 0;
 		virtual void SetScissor(Bool bEnable, Extent2D minExt, Extent2D maxExt) = 0;
-
-        virtual void SetVertexShader(IShader* pShader) = 0;
-        virtual void SetPixelShader(IShader* pShader) = 0;
-        virtual void SetComputeShader(IShader* pShader) = 0;
 
 		virtual void SetShaderTexture(IShader* shader) = 0;
 		virtual void SetShaderUniformBuffer(IShader::Stage stage, IBuffer* uniformBuffer, Int32 bufferIndex, IShader* shader) = 0;
@@ -60,11 +56,5 @@ namespace TinyRHI
 		virtual void CopyImageToImage(IImageView* srcImageView, IImageView* dstImageView) = 0;
 
         virtual void Commit() = 0;
-
-
-    private:
-    
     };
-
-
-} // namespace TinyRHI
+}

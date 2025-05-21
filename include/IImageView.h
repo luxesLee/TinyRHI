@@ -33,4 +33,10 @@ namespace TinyRHI
 	public:
 		virtual ~IImageView() {}
 	};
+
+	class ITexture
+	{
+	public:
+		virtual ~ITexture() {}
+	};
 }

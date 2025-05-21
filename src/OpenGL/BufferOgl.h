@@ -4,10 +4,10 @@
 
 namespace TinyRHI
 {
-    class OglBuffer : public IBuffer
+    class BufferOgl : public IBuffer
     {
     public:
-        OglBuffer()
+        BufferOgl()
         {
             
         }

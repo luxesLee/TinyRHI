@@ -4,7 +4,7 @@
 
 namespace TinyRHI
 {
-    class OglFramebuffer : public IFramebuffer
+    class FramebufferOgl : public IFramebuffer
     {
     
 

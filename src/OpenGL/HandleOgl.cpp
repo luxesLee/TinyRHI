@@ -1,0 +1,58 @@
+#include <iostream>
+#include "HandleOgl.h"
+#include "ShaderOgl.h"
+#include <GLFW/glfw3.h>
+
+using namespace TinyRHI;
+
+HandleOgl::HandleOgl()
+{
+    // Init Ogl Environment
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) 
+    {
+        std::cout << "glad load failed" << std::endl;
+    }
+}
+
+HandleOgl::~HandleOgl()
+{
+}
+
+IShader* HandleOgl::CreateVertexShader(ShaderDesc &shaderDesc)
+{
+    return new ShaderOgl<IShader::Stage::Vertex>(shaderDesc);
+}
+
+IShader* HandleOgl::CreatePixelShader(ShaderDesc &shaderDesc)
+{
+    return new ShaderOgl<IShader::Stage::Pixel>(shaderDesc);
+}
+
+IShader* HandleOgl::CreateComputeShader(ShaderDesc &shaderDesc)
+{
+    return new ShaderOgl<IShader::Stage::Compute>(shaderDesc);
+}
+
+void TinyRHI::HandleOgl::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances)
+{
+    
+}
+
+void TinyRHI::HandleOgl::DrawPrimitiveIndirect(IBuffer *argumentBuffer, Uint32 argumentOffset)
+{
+
+}
+
+void TinyRHI::HandleOgl::DrawIndexPrimitive(IBuffer *indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances)
+{
+
+}
+
+void HandleOgl::Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ)
+{
+    glDispatchCompute(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
+}

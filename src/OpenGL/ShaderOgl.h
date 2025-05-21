@@ -31,25 +31,17 @@ namespace TinyRHI
         }
     }
 
-    GLuint ConvertOglStage(IShader::Stage stage)
-    {
-        switch (stage)
-        {
-        case IShader::Stage::Vertex: return GL_VERTEX_SHADER;
-        case IShader::Stage::Pixel: return GL_FRAGMENT_SHADER;
-        case IShader::Stage::Compute: return GL_COMPUTE_SHADER;
-        }
-        return GL_VERTEX_SHADER;
-    }
-
-    class OglShader : public IShader
+    template<IShader::Stage stage>
+    class ShaderOgl : public IShader
     {
     public:
-        friend class OglShaderProgram;
+        friend class ShaderProgramOgl;
 
-        OglShader(ShaderDesc& shaderDesc, Stage stage)
+        ShaderOgl(const ShaderDesc& shaderDesc)
         {
-            shaderID = glCreateShader(ConvertOglStage(stage));
+            shaderID = glCreateShader(
+                stage == IShader::Stage::Vertex ? GL_VERTEX_SHADER 
+                : (stage == IShader::Stage::Pixel ? GL_FRAGMENT_SHADER : GL_COMPUTE_SHADER));
             glShaderSource(shaderID, 1, ((const GLchar *const *)shaderDesc.codeData), NULL);
             glCompileShader(shaderID);
             checkCompileErrors(shaderID, "SHADER");
@@ -59,10 +51,10 @@ namespace TinyRHI
         GLuint shaderID;
     };
 
-    class OglShaderProgram
+    class ShaderProgramOgl
     {
     public:
-        OglShaderProgram(OglShader* pVert, OglShader* pFrag)
+        ShaderProgramOgl(ShaderOgl<IShader::Stage::Vertex>* pVert, ShaderOgl<IShader::Stage::Pixel>* pFrag)
         {
             ID = glCreateProgram();
             glAttachShader(ID, pVert->shaderID);
@@ -71,7 +63,7 @@ namespace TinyRHI
             checkCompileErrors(ID, "PROGRAM");
         }
 
-        OglShaderProgram(OglShader* pComp)
+        ShaderProgramOgl(ShaderOgl<IShader::Stage::Compute>* pComp)
         {
             ID = glCreateProgram();
             glAttachShader(ID, pComp->shaderID);

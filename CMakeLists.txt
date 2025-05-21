@@ -5,23 +5,24 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Vulkan REQUIRED)
+message(STATUS "Vulkan_INCLUDE_DIRS: ${Vulkan_INCLUDE_DIRS}")
+message(STATUS "Vulkan_LIBRARIES: ${Vulkan_LIBRARIES}")
+
 find_package(OpenGL REQUIRED)
 
 set(GLAD_DIR ${CMAKE_SOURCE_DIR}/third_party/glad)
 set(GLFW_DIR ${CMAKE_SOURCE_DIR}/third_party/glfw)
 set(GLM_DIR ${CMAKE_SOURCE_DIR}/third_party/glm)
 
-file(GLOB HEADER_FILES "${PROJECT_SOURCE_DIR}/src/**/*.h")
+# file(GLOB HEADER_FILES "${PROJECT_SOURCE_DIR}/src/**/*.h")
 # foreach(file ${HEADER_FILES})
 #     message(STATUS "Found header: ${file}")
 # endforeach()
 
 include_directories(
-    ${PROJECT_SOURCE_DIR}/include
-    ${HEADER_FILES}
     ${GLAD_DIR}/include
     ${GLFW_DIR}/include
-    ${GLM_DIR}/include)
+    ${GLM_DIR})
 
 file(GLOB SRC_FILES "${PROJECT_SOURCE_DIR}/src/**/*.cpp")
 foreach(file ${SRC_FILES})
@@ -29,6 +30,16 @@ foreach(file ${SRC_FILES})
 endforeach()
 
 add_library(TinyRHI STATIC ${SRC_FILES})
+target_include_directories(TinyRHI PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(TinyRHI PRIVATE ${Vulkan_INCLUDE_DIRS})
+target_link_libraries(TinyRHI ${Vulkan_LIBRARIES})
 
 set_target_properties(TinyRHI PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+
+# Test
+# include(CTest)
+# enable_testing()
+
+# add_executable(my_test1 test/test_example.cpp)
+# add_test(NAME TinyRHITest COMMAND my_test1)
