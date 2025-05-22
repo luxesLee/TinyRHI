@@ -5,6 +5,7 @@
 #include "PipelineVk.h"
 #include "PendingStateVk.h"
 #include <iostream>
+#include <cassert>
 
 using namespace TinyRHI;
 
@@ -172,16 +173,13 @@ void VkHandle::BeginCommand()
 void VkHandle::EndCommand()
 {
 	currentCmd.end();
-
+	
 	currentCmd = VK_NULL_HANDLE;
 }
 
 void VkHandle::BeginRenderPass()
 {
-	if(!currentCmd)
-	{
-		
-	}
+	assert(currentCmd != vk::CommandBuffer());
 	vk::RenderPassBeginInfo renderPassBeginInfo = vk::RenderPassBeginInfo()
 		// .setRenderPass()
 		// .setFramebuffer()
@@ -209,7 +207,8 @@ void VkHandle::SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline)
 	{
 		if(pGfxPending->SetPipeline(vkGfxPipeline))
 		{
-			vkGfxPipeline->Bind(currentCmd);
+			pGfxPending->SetCmdBuffer(currentCmd);
+			pGfxPending->Bind();
 			pGfxPending->MarkUpdateDynamicStates();
 		}
 	}
@@ -223,13 +222,18 @@ void VkHandle::SetComputePipelineState(IComputePipeline *computePipeline)
 		if(pComputePending->SetPipeline(vkComputePipeline))
 		{
 			vkComputePipeline->Bind(currentCmd);
+			pComputePending->SetCmdBuffer(currentCmd);
 		}
 	}
 }
 
-void VkHandle::SetVertexStream(IBuffer *buffer, Uint32 offset)
+void VkHandle::SetVertexStream(Uint32 vertId, IBuffer *buffer, Uint32 offset)
 {
-	pGfxPending->SetBuffer();
+	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
+	if(vkBuffer)
+	{
+		pGfxPending->SetVertex(vertId, vkBuffer->BufferHandle(), offset);
+	}
 }
 
 void VkHandle::SetViewport(Extent3D minExt, Extent3D maxExt)
@@ -254,7 +258,7 @@ void VkHandle::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint3
 	pGfxPending->PrepareDraw();
 
 	numInstances = std::max(1U, numInstances);
-	Uint numVertices;
+	Uint numVertices = 0;
 
 	currentCmd.draw(numVertices, numInstances, baseVertexIndex, 0);
 }
@@ -276,7 +280,7 @@ void VkHandle::DrawIndexPrimitive(IBuffer *indexBuffer, Int32 baseVertexIndex, U
 	if(vkIndexBuffer)
 	{
 		currentCmd.bindIndexBuffer(vkIndexBuffer->BufferHandle(), 0, vk::IndexType::eUint32);
-		Uint32 numIndices;
+		Uint32 numIndices = 0;
 		currentCmd.drawIndexed(numIndices, numInstances, startIndex, baseVertexIndex, firstInstance);
 	}
 }

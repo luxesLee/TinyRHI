@@ -13,7 +13,6 @@ namespace TinyRHI
 
 		void SetBufferData(void* data, Uint32 dataSize, Uint32 offset);
 
-		// ����Uniform�Ⱦ������µ�Buffer������unmap
 		void UpdateBufferData(void* data, Uint32 dataSize, Uint32 offset)
 		{
 			if (!mappedDataPtr)

@@ -51,7 +51,7 @@ namespace TinyRHI
 		virtual void SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline) = 0;
 		virtual void SetComputePipelineState(IComputePipeline* computePipeline) = 0;
 
-		virtual void SetVertexStream(IBuffer* buffer, Uint32 offset) = 0;
+		virtual void SetVertexStream(Uint32 vertId, IBuffer* buffer, Uint32 offset) = 0;
 		virtual void SetViewport(Extent3D minExt, Extent3D maxExt) = 0;
 		virtual void SetScissor(Extent2D minExt, Extent2D maxExt) = 0;
 

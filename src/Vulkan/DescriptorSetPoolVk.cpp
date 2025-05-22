@@ -30,7 +30,7 @@ DescriptorSetPoolVk::DescriptorSetPoolVk(
 }
 
 template <Bool bUniform>
-Bool DescriptorSetWriterVk::WriteUniformBuffer(vk::Buffer buffer, Uint32 offset, Uint32 range, Uint32 dstBinding)
+Bool DescriptorSetWriterVk::WriteBuffer(vk::Buffer buffer, Uint32 offset, Uint32 range, Uint32 dstBinding)
 {
     auto bufferInfo = vk::DescriptorBufferInfo()
         .setBuffer(buffer)
@@ -53,27 +53,29 @@ Bool DescriptorSetWriterVk::WriteUniformBuffer(vk::Buffer buffer, Uint32 offset,
 
     writeDescriptorSets.push_back(writeDescriptorSet);
     bDirty = true;
+    return true;
 }
 
-template <Bool bStorage>
-Bool DescriptorSetWriterVk::WriteImageSampler(vk::ImageView imageView, vk::Sampler sampler, vk::ImageLayout layout, Uint32 dstBinding)
+template<bool bWriteEnable>
+Bool DescriptorSetWriterVk::WriteImage(vk::ImageView imageView, vk::Sampler sampler, Uint32 dstBinding)
 {
     auto imageInfo = vk::DescriptorImageInfo()
         .setImageView(imageView)
-        .setSampler(sampler)
-        .setImageLayout(layout);
+        .setSampler(sampler);
 
     auto writeDescriptorSet = vk::WriteDescriptorSet()
         .setDstBinding(dstBinding)
         .setDescriptorCount(1)
         .setPImageInfo(&imageInfo);
 
-    if (bStorage)
+    if (bWriteEnable)
     {
+        writeDescriptorSet.pImageInfo->imageLayout = vk::ImageLayout::eGeneral;
         writeDescriptorSet.setDescriptorType(vk::DescriptorType::eStorageImage);
     }
     else
     {
+        writeDescriptorSet.pImageInfo->imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
         writeDescriptorSet.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
     }
 

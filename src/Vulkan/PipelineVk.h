@@ -11,13 +11,13 @@ namespace TinyRHI
 	public:
 		PipelineLayoutVk(
 			const DeviceData& deviceData, 
-			std::vector<DescriptorSetLayoutVk*> _vkDescriptorSetLayouts)
+			std::vector<DescriptorSetLayoutVk> _vkDescriptorSetLayouts)
 			: vkDescriptorSetLayouts(_vkDescriptorSetLayouts)
 		{
 			std::vector<vk::DescriptorSetLayout> descriptorSetLayouts(vkDescriptorSetLayouts.size());
 			for (Uint32 i = 0; i < vkDescriptorSetLayouts.size(); i++)
 			{
-				descriptorSetLayouts[i] = vkDescriptorSetLayouts[i]->Handle();
+				descriptorSetLayouts[i] = vkDescriptorSetLayouts[i].DSLayoutHandle();
 			}
 
 			auto pipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo()
@@ -27,14 +27,19 @@ namespace TinyRHI
 			pipelineLayout = deviceData.logicalDevice.createPipelineLayoutUnique(pipelineLayoutCreateInfo);
 		}
 
-		auto& Handle()
+		auto& PipelineLayoutHandle()
 		{
 			return pipelineLayout.get();
 		}
 
+		auto& DSLayoutHandle()
+		{
+			return vkDescriptorSetLayouts;
+		}
+
 	private:
 		vk::UniquePipelineLayout pipelineLayout;
-		std::vector<DescriptorSetLayoutVk*> vkDescriptorSetLayouts;
+		std::vector<DescriptorSetLayoutVk> vkDescriptorSetLayouts;
 	};
 
 	class GraphicsPipelineVk : public IGraphicsPipeline
@@ -57,6 +62,11 @@ namespace TinyRHI
 		auto& PipelineHandle()
 		{
 			return pipeline.get();
+		}
+
+		auto& PipelineDescHandle()
+		{
+			return graphicsPipelineDesc;
 		}
 
 	private:

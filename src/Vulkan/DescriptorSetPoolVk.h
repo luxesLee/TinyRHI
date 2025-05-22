@@ -2,6 +2,7 @@
 #include "HeaderVk.h"
 #include <unordered_map>
 #include <tuple>
+#include <cassert>
 
 namespace TinyRHI
 {
@@ -16,14 +17,30 @@ namespace TinyRHI
 		}
 	};
 
+	using DescriptorSetLayoutBindingDescArray = std::vector<DescriptorSetLayoutBindingDesc>;
+
+	Uint32 ComputeHash(const DescriptorSetLayoutBindingDescArray& layoutBindings)
+	{
+		Uint32 hashVal = 0;
+		const Uint32 prime = 31;
+		for(const auto& binding : layoutBindings)
+		{
+			hashVal = hashVal * prime + std::hash<Uint32>()(binding.binding) 
+				+ std::hash<Uint32>()((Uint32)binding.flag) + std::hash<Uint32>()((Uint32)binding.flag);
+			hashVal ^= (hashVal >> 16);
+		}
+		return hashVal;
+	}
+
 	class DescriptorSetLayoutVk
 	{
 	public:
+		DescriptorSetLayoutVk() = delete;
 		DescriptorSetLayoutVk(
 			const DeviceData& deviceData,
-			std::vector<DescriptorSetLayoutBindingDesc>& _layoutBindings)
+			const DescriptorSetLayoutBindingDescArray& _layoutBindings)
+			: layoutBindings(_layoutBindings)
 		{
-			this->layoutBindings = layoutBindings;
 			std::vector<vk::DescriptorSetLayoutBinding> dsLayoutBindings(layoutBindings.size());
 			for (Uint32 i = 0; i < layoutBindings.size(); i++)
 			{
@@ -38,55 +55,57 @@ namespace TinyRHI
 				.setBindingCount(dsLayoutBindings.size())
 				.setPBindings(dsLayoutBindings.data());
 			descriptorSetLayout = deviceData.logicalDevice.createDescriptorSetLayoutUnique(dsLayoutCreateInfo);
+
+			hashKey = ComputeHash(layoutBindings);
 		}
 
-		std::vector<DescriptorSetLayoutBindingDesc>& LayoutBinding()
+		DescriptorSetLayoutBindingDescArray& LayoutBinding()
 		{
 			return layoutBindings;
 		}
 
-		Bool Compare(DescriptorSetLayoutVk* other) const
-		{
-			return other->LayoutBinding() == layoutBindings;
-		}
-
-		auto& Handle()
+		auto& DSLayoutHandle()
 		{
 			return descriptorSetLayout.get();
 		}
 
+		Uint32 Hash() const
+		{
+			return hashKey;
+		}
+
 	private:
 		vk::UniqueDescriptorSetLayout descriptorSetLayout;
-		std::vector<DescriptorSetLayoutBindingDesc> layoutBindings;
+		DescriptorSetLayoutBindingDescArray layoutBindings;
+		Uint32 hashKey;
 	};
 
 	class DescriptorSetVk
 	{
 	public:
+		DescriptorSetVk() = delete;
 		DescriptorSetVk(
 			const DeviceData& _deviceData,
-			vk::DescriptorPool descriptorPool,
-			DescriptorSetLayoutVk* _layout)
+			vk::DescriptorPool _descriptorPool,
+			DescriptorSetLayoutVk* _descriptorSetLayout)
+			: descriptorSetLayout(_descriptorSetLayout)
 		{
-			if (_layout)
-			{
-				this->descriptorSetLayout = _layout;
-				auto descriptorSetAllocInfo = vk::DescriptorSetAllocateInfo()
-					.setDescriptorPool(descriptorPool)
-					.setDescriptorSetCount(1)
-					.setPSetLayouts(&descriptorSetLayout->Handle());
-				descriptorSet = _deviceData.logicalDevice.allocateDescriptorSets(descriptorSetAllocInfo)[0];
-			}
+			assert(descriptorSetLayout != nullptr);
+			auto descriptorSetAllocInfo = vk::DescriptorSetAllocateInfo()
+				.setDescriptorPool(_descriptorPool)
+				.setDescriptorSetCount(1)
+				.setPSetLayouts(&descriptorSetLayout->DSLayoutHandle());
+			descriptorSet = _deviceData.logicalDevice.allocateDescriptorSets(descriptorSetAllocInfo)[0];
 		}
 
-		Bool Compare(DescriptorSetLayoutVk* other) const
-		{
-			return descriptorSetLayout->Compare(other);
-		}
-
-		auto& Handle()
+		auto& DescriptorSetHandle()
 		{
 			return descriptorSet;
+		}
+
+		auto& DesriptorSetLayoutHandle()
+		{
+			return descriptorSetLayout->DSLayoutHandle();
 		}
 
 	private:
@@ -118,81 +137,33 @@ namespace TinyRHI
 
 	};
 
-	/*
-	* layoutBindings <--> descriptorSetLayout <--> descriptorSet
-	*/
-	class DescriptorSetPoolVk
-	{
-	public:
-		typedef std::vector<DescriptorSetLayoutBindingDesc> DSLayoutKey;
-		typedef std::unordered_map<DSLayoutKey, std::unique_ptr<DescriptorSetLayoutVk>> DSLayoutPool;
-		typedef std::unordered_map<DescriptorSetLayoutVk*, std::unique_ptr<DescriptorSetVk>> DSPool;
-
-	public:
-		DescriptorSetPoolVk(
-			const DeviceData& _deviceData);
-
-		DescriptorSetLayoutVk* GetDescriptorSetLayout(DSLayoutKey key)
-		{
-			auto& vkDSLayout = descriptorSetLayoutCache[key];
-			if (!vkDSLayout)
-			{
-				vkDSLayout = std::make_unique<DescriptorSetLayoutVk>(deviceData, key);
-			}
-			return vkDSLayout.get();
-		}
-
-		DescriptorSetVk* GetDescriptorSet(DescriptorSetLayoutVk* key)
-		{
-			auto& vkDescriptorSet = descriptorSetCache[key];
-			if (!vkDescriptorSet)
-			{
-				vkDescriptorSet = std::make_unique<DescriptorSetVk>(deviceData, descriptorPool.get(), key);
-				return vkDescriptorSet.get();
-			}
-
-			if (!vkDescriptorSet->Compare(key))
-			{
-				vkDescriptorSet = std::make_unique<DescriptorSetVk>(deviceData, descriptorPool.get(), key);
-			}
-
-			return vkDescriptorSet.get();
-		}
-
-	private:
-		const DeviceData& deviceData;
-		vk::UniqueDescriptorPool descriptorPool;
-
-		DSLayoutPool descriptorSetLayoutCache;
-		DSPool descriptorSetCache;
-	};
-
-	// �ռ�д���descriptorset��Ϣ
 	class DescriptorSetWriterVk
 	{
 	public:
-		DescriptorSetWriterVk()
+		DescriptorSetWriterVk(Uint descriptorSetNum = 8)
 		{
-			Reset();
-		}
-
-		void Reset()
-		{
-			writeDescriptorSets.clear();
+			assert(descriptorSetNum != 0);
+			writeDescriptorSets.resize(descriptorSetNum);
 			currentDescriptorSet = nullptr;
 		}
 
-		template<Bool bUniform>
-		Bool WriteUniformBuffer(vk::Buffer buffer, Uint32 offset, Uint32 range, Uint32 dstBinding);
+		// offset: 0 default
+		// range: bufferSize
+		template <Bool bUniform>
+		Bool WriteBuffer(vk::Buffer buffer, Uint32 offset, Uint32 range, Uint32 dstBinding);
 
-		template<Bool bStorage>
-		Bool WriteImageSampler(vk::ImageView imageView, vk::Sampler sampler, vk::ImageLayout layout, Uint32 dstBinding);
+		template<bool bWriteEnable>
+		Bool WriteImage(vk::ImageView imageView, vk::Sampler sampler, Uint32 dstBinding);
 
 		void BindDescriptor(DescriptorSetVk* vkDescriptorSet)
 		{
-			for (auto& wdSet : writeDescriptorSets)
+			if(vkDescriptorSet != currentDescriptorSet)
 			{
-				wdSet.setDstSet(vkDescriptorSet->Handle());
+				currentDescriptorSet = vkDescriptorSet;
+				for (auto& wdSet : writeDescriptorSets)
+				{
+					wdSet.setDstSet(vkDescriptorSet->DescriptorSetHandle());
+				}
 			}
 		}
 
@@ -212,14 +183,70 @@ namespace TinyRHI
 			return bDirty;
 		}
 
-		auto& GetHandle() const
-		{
-			return writeDescriptorSets;
-		}
-
 	private:
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		DescriptorSetVk* currentDescriptorSet;
 		Bool bDirty;
 	};
+
+	/*
+	* layoutBindings <--> descriptorSetLayout <--> descriptorSet
+	*/
+	class DescriptorSetPoolVk
+	{
+	public:
+		DescriptorSetPoolVk(
+			const DeviceData& _deviceData);
+		~DescriptorSetPoolVk() {}
+
+		DescriptorSetLayoutVk* GetDescriptorSetLayout(const DescriptorSetLayoutBindingDescArray& layoutBindings)
+		{
+			Uint32 hashId = ComputeHash(layoutBindings);
+			auto& vkDescriptorSetLayoutVk = descriptorSetLayoutCache[hashId];
+			if(!vkDescriptorSetLayoutVk)
+			{
+				vkDescriptorSetLayoutVk = std::make_unique<DescriptorSetLayoutVk>(deviceData, layoutBindings);
+			}
+			return vkDescriptorSetLayoutVk.get();
+		}
+
+		DescriptorSetVk* GetDescriptorSet(const DescriptorSetLayoutBindingDescArray& layoutBindings)
+		{
+			Uint32 hashId = ComputeHash(layoutBindings);
+			auto& vkDescriptorSet = descriptorSetCache[hashId];
+			if(!vkDescriptorSet)
+			{
+				DescriptorSetLayoutVk* vkDescriptorSetLayout = GetDescriptorSetLayout(layoutBindings);
+				vkDescriptorSet = std::make_unique<DescriptorSetVk>(deviceData, descriptorPool.get(), vkDescriptorSetLayout);
+			}
+			return vkDescriptorSet.get();
+		}
+
+		DescriptorSetVk* GetDescriptorSet(DescriptorSetLayoutVk* dsLayout)
+		{
+			if(!dsLayout)
+			{
+				return nullptr;
+			}
+
+			Uint32 hashId = dsLayout->Hash();
+			auto& vkDescriptorSet = descriptorSetCache[hashId];
+			if(!vkDescriptorSet)
+			{
+				if(!descriptorSetLayoutCache[hashId])
+				{
+					descriptorSetLayoutCache[hashId] = std::unique_ptr<DescriptorSetLayoutVk>(dsLayout);
+				}
+				vkDescriptorSet = std::make_unique<DescriptorSetVk>(deviceData, descriptorPool.get(), dsLayout);
+			}
+			return vkDescriptorSet.get();
+		}
+
+	private:
+		const DeviceData& deviceData;
+		vk::UniqueDescriptorPool descriptorPool;
+		std::unordered_map<Uint32, std::unique_ptr<DescriptorSetLayoutVk>> descriptorSetLayoutCache;
+		std::unordered_map<Uint32, std::unique_ptr<DescriptorSetVk>> descriptorSetCache;
+	};
+
 }

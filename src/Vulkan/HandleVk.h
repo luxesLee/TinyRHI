@@ -34,6 +34,7 @@ namespace TinyRHI
 	public:
         // 
         // ------------------------------------------------------------------------------------------------
+		
         virtual IGraphicsPipeline* CreateGrpahicsPipeline(const GraphicsPipelineDesc& gfxPipelineDesc);
 		virtual IComputePipeline* CreateComputePipeline(const ComputePipelineDesc& computePipelineDesc);
 
@@ -53,17 +54,18 @@ namespace TinyRHI
         // ------------------------------------------------------------------------------------------------
 
 		// ExcuteOrder
-		// BeginFrame -> (BeginCommand -> (BeginRenderPass -> EndRenderPass) * m -> EndCommand) * n -> EndFrame
+		// BeginFrame -> 
+		// 	(BeginCommand -> 
+		// 		(BeginRenderPass -> EndRenderPass) * m -> 
+		// 	EndCommand) * n -> 
+		// EndFrame
 		
-		// 这里应该等待fence之类的
 		virtual void BeginFrame();
 		virtual void EndFrame();
 
-		// 设置新commandBuffer
 		virtual void BeginCommand();
 		virtual void EndCommand();
 
-		// framebuffer、renderpass设置
 		virtual void BeginRenderPass();
 		virtual void EndRenderPass();
 
@@ -72,7 +74,7 @@ namespace TinyRHI
 		virtual void SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline);
 		virtual void SetComputePipelineState(IComputePipeline* computePipeline);
 
-		virtual void SetVertexStream(IBuffer* buffer, Uint32 offset);
+		virtual void SetVertexStream(Uint32 vertId, IBuffer* buffer, Uint32 offset);
 		virtual void SetViewport(Extent3D minExt, Extent3D maxExt);
 		virtual void SetScissor(Extent2D minExt, Extent2D maxExt);
 

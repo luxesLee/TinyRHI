@@ -16,10 +16,10 @@ namespace TinyRHI
 				.setCodeSize(shaderDesc.codeSize)
 				.setPCode((Uint32*)shaderDesc.codeData);
 
-			deviceData.logicalDevice.createShaderModuleUnique(shaderModuleCreateInfo);
+			shader = deviceData.logicalDevice.createShaderModuleUnique(shaderModuleCreateInfo);
 		}
 
-		vk::PipelineShaderStageCreateInfo& Handle()
+		vk::PipelineShaderStageCreateInfo Handle()
 		{
 			auto createInfo = vk::PipelineShaderStageCreateInfo()
 				.setModule(shader.get())

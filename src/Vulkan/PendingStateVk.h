@@ -1,15 +1,85 @@
 #pragma
+#include <cassert>
 #include "PipelineVk.h"
+#include "DescriptorSetPoolVk.h"
 
 namespace TinyRHI
 {
+    #define MaxVertexCount 20
+    #define MaxDescriptorSetCount 4
+
+    class TextureVk;
+    class BufferVk;
+
     class PendingStateVk
     {
+    public:
+        PendingStateVk()
+        {
+            for(Uint i = 0; i < MaxDescriptorSetCount; i++)
+            {
+                // dsWriter;
+            }
+        }
 
+        void SetCmdBuffer(vk::CommandBuffer cmdBuffer)
+        {
+            currentCmdBuffer = cmdBuffer;
+        }
 
+        void SetSamplerImage(TextureVk* vkTexture, Uint setId, Uint bindingId)
+        {
+            return SetTexture<false>(vkTexture, setId, bindingId);
+        }
+
+        void SetStorageImage(TextureVk* vkTexture, Uint setId, Uint bindingId)
+        {
+            return SetTexture<true>(vkTexture, setId, bindingId);
+        }
+
+        void SetStorageBuffer(BufferVk* vkBuffer, Uint setId, Uint bindingId)
+        {
+            return SetBuffer<false>(vkBuffer, setId, bindingId);
+        }
+        void SetUniformBuffer(BufferVk* vkBuffer, Uint setId, Uint bindingId)
+        {
+            return SetBuffer<true>(vkBuffer, setId, bindingId);
+        }
+
+    protected:
+        template<bool bWriteEnable>
+        void SetTexture(TextureVk* vkTexture, Uint setId, Uint bindingId)
+        {
+            Dirty(dsWriter[setId].WriteImage<bWriteEnable>(vkTexture->ImageViewHandle(), vkTexture->SamplerHandle(), bindingId), setId);
+        }
+
+        template<Bool bUniform>
+        void SetBuffer(BufferVk* vkBuffer, Uint setId, Uint bindingId)
+        {
+            Dirty(dsWriter[setId].WriteBuffer<bUniform>(vkBuffer->BufferHandle(), 0, vkBuffer->GetSize(), bindingId), setId);
+        }
+
+        void Dirty(Bool bDirty, Uint index)
+        {
+            if(bDirty && index < MaxDescriptorSetCount)
+            {
+                writerDirty[index] = true;
+                dsChanged = true;
+            }
+        }
+
+    protected:
+        vk::CommandBuffer currentCmdBuffer;
+
+        DescriptorSetWriterVk dsWriter[MaxDescriptorSetCount];
+        Bool writerDirty[MaxDescriptorSetCount];
+        Bool dsChanged;
+
+        vk::DescriptorSet* dsArray[MaxDescriptorSetCount];
+        Uint dsNum;
+        std::unique_ptr<DescriptorSetPoolVk> dsPool;
     };
 
-    #define MaxVertexCount 20
     class GfxPendingStateVk : public PendingStateVk
     {
     public:
@@ -17,7 +87,9 @@ namespace TinyRHI
         {
             Reset();
         }
-        ~GfxPendingStateVk();
+        ~GfxPendingStateVk()
+        {
+        }
 
         void Reset()
         {
@@ -27,6 +99,8 @@ namespace TinyRHI
             scissor = vk::Rect2D();
             bScissorDirty = true;
 
+            bVertDirty = true;
+
             currentPipeline = nullptr;
         }
 
@@ -35,11 +109,25 @@ namespace TinyRHI
             if(currentPipeline != newPipeline)
             {
                 currentPipeline = newPipeline;
-                bDescriptorSetDirty = true;
+                PipelineLayoutVk* vkPipelineLayout = dynamic_cast<PipelineLayoutVk*>(currentPipeline->PipelineDescHandle().pipelineLayout);
+                if(vkPipelineLayout)
+                {
+                    auto& dsVkArray = vkPipelineLayout->DSLayoutHandle();
+                    for(dsNum = 0; dsNum < dsVkArray.size() && dsNum < MaxDescriptorSetCount; dsNum++)
+                    {
+                        dsArray[dsNum] = &dsPool->GetDescriptorSet(&dsVkArray[dsNum])->DescriptorSetHandle();
+                    }
+                }
                 return true;
             }
             return false;
         }
+
+        void Bind()
+        {
+            currentPipeline->Bind(currentCmdBuffer);
+        }
+
         void SetViewport(vk::Viewport newViewport)
         {
             if(viewport != newViewport)
@@ -49,6 +137,7 @@ namespace TinyRHI
                 // SetScissor();
             }
         }
+
         void SetScissor(vk::Rect2D newScissor)
         {
             if(scissor != newScissor)
@@ -57,9 +146,16 @@ namespace TinyRHI
                 bScissorDirty = true;
             }
         }
-        void SetVertex();
-        void SetTexture();
-        void SetBuffer();
+
+        void SetVertex(Uint32 vertId, vk::Buffer vertBuffer, Uint32 offset)
+        {
+            if(vertId < MaxVertexCount && vertBufferArray[vertId] != vertBuffer && vertOffsetArray[vertId] != offset)
+            {
+                vertBufferArray[vertId] = vertBuffer;
+                vertOffsetArray[vertId] = offset;
+                bVertDirty = true;
+            }
+        }
 
         void MarkUpdateDynamicStates()
         {
@@ -68,19 +164,18 @@ namespace TinyRHI
         }
 
         void PrepareDraw();
+
         void UpdateDynamicStates()
         {
-            vk::CommandBuffer cmdBuffer;
-
             if(bViewportDirty)
             {
-                cmdBuffer.setViewport(0, viewport);
+                currentCmdBuffer.setViewport(0, viewport);
                 bViewportDirty = false;
             }
 
             if(bScissorDirty)
             {
-                cmdBuffer.setScissor(0, scissor);
+                currentCmdBuffer.setScissor(0, scissor);
                 bScissorDirty = false;
             }
         }
@@ -92,9 +187,11 @@ namespace TinyRHI
         vk::Rect2D scissor;
         Bool bScissorDirty;
 
-        GraphicsPipelineVk* currentPipeline;
+        vk::Buffer vertBufferArray[MaxVertexCount];
+        vk::DeviceSize vertOffsetArray[MaxVertexCount];
+        Bool bVertDirty;
 
-        Bool bDescriptorSetDirty;
+        GraphicsPipelineVk* currentPipeline;
     };
 
     class ComputePendingStateVk : public PendingStateVk
@@ -113,16 +210,10 @@ namespace TinyRHI
             return false;
         }
 
-        void SetTexture();
-        void SetBuffer();
-
         void PrepareDispatch();
 
     private:
         ComputePipelineVk* currentPipeline;
-
-        Bool bDescriptorSetDirty;
-
     };
 
 }

@@ -23,33 +23,34 @@ namespace TinyRHI
         }
 
         void SubmitCmdBuffer(
-            const std::vector<vk::Semaphore>& waitSemaphores,
-            const std::vector<vk::Semaphore>& signalSemaphores,
-            const std::optional<vk::PipelineStageFlags>& waitStages,
+            // const std::vector<vk::Semaphore>& waitSemaphores,
+            // const std::vector<vk::Semaphore>& signalSemaphores,
+            // const std::optional<vk::PipelineStageFlags>& waitStages,
             const std::optional<vk::Fence> fence)
         {
             vk::SubmitInfo submitInfo = vk::SubmitInfo()
                 .setCommandBufferCount(activeBuffers.size())
                 .setPCommandBuffers(activeBuffers.data())
-                .setWaitSemaphoreCount(waitSemaphores.size())
-                .setPWaitSemaphores(waitSemaphores.data())
-                .setSignalSemaphoreCount(signalSemaphores.size())
-                .setPSignalSemaphores(signalSemaphores.data());
+                // .setWaitSemaphoreCount(waitSemaphores.size())
+                // .setPWaitSemaphores(waitSemaphores.data())
+                // .setSignalSemaphoreCount(signalSemaphores.size())
+                // .setPSignalSemaphores(signalSemaphores.data())
+                ;
 
-            if(waitStages.has_value())
-            {
-                submitInfo.setPWaitDstStageMask(&waitStages.value());
-            }
+            // if(waitStages.has_value())
+            // {
+            //     submitInfo.setPWaitDstStageMask(&waitStages.value());
+            // }
 
             deviceData.graphicsQueue.submit(submitInfo, fence.has_value() ? fence.value() : VK_NULL_HANDLE);
 
             // activeBuffers
-            
+
         }
 
         vk::CommandBuffer GetCmdBuffer()
         {
-
+            return vk::CommandBuffer();
         }
 
         auto& CmdPoolHandle()

@@ -84,8 +84,8 @@ namespace TinyRHI
 			const DeviceData& deviceData,
 			const ImageDesc& imageDesc,
 			const SamplerState& samplerState)
-			: imageView(std::make_unique<ImageViewVk>(deviceData.logicalDevice, imageDesc)),
-			sampler(std::make_unique<SamplerVk>(samplerState))
+			: imageView(std::make_unique<ImageViewVk>(deviceData, imageDesc)),
+			sampler(std::make_unique<SamplerVk>(deviceData.logicalDevice, samplerState))
 		{
 		}
 

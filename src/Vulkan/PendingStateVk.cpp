@@ -1,29 +1,89 @@
 #include "PendingStateVk.h"
+#include "BufferVk.h"
+#include "ImageViewVk.h"
 
 using namespace TinyRHI;
 
 void GfxPendingStateVk::PrepareDraw()
 {
-
     UpdateDynamicStates();
 
-    if(bDescriptorSetDirty)
+    if(dsChanged)
     {
+        dsChanged = false;
         // 1. write change to descriptorSet
+        for(Uint dsWriterIndex = 0; dsWriterIndex < MaxDescriptorSetCount; dsWriterIndex++)
+        {
+            if(writerDirty[dsWriterIndex])
+            {
+                // dsWriter[dsWriterIndex].BindDescriptor(dsArray[dsWriterIndex]);
+                // dsWriter[dsWriterIndex].Update();
+            }
+        }
 
         // 2. bind descriptorSet
+        currentCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentPipeline->GetLayout(), 0, dsNum, dsArray[0], 0, nullptr);
+    }
 
+    if(bVertDirty)
+    {
+        bVertDirty = false;
+        const VertexDeclaration& vertexDecl = currentPipeline->PipelineDescHandle().vertexDecl;
+        if(vertexDecl.attributeDescs.size() == 0)
+        {
+            return;
+        }
+
+        struct TemporaryIA
+		{
+			vk::Buffer VertexBuffers[MaxVertexCount];
+			vk::DeviceSize VertexOffsets[MaxVertexCount];
+			Uint32 NumUsed = 0;
+
+			void Add(VkBuffer InBuffer, VkDeviceSize InSize)
+			{
+				assert(NumUsed < MaxVertexCount);
+				VertexBuffers[NumUsed] = InBuffer;
+				VertexOffsets[NumUsed] = InSize;
+				++NumUsed;
+			}
+		} TemporaryIA;
+
+        for(Uint bindingId = 0; bindingId < vertexDecl.vertexBindings.size(); bindingId++)
+        {
+            Uint arrayId = vertexDecl.vertexBindings[bindingId].binding;
+            if(vertBufferArray[arrayId] == vk::Buffer())
+            {
+                continue;
+            }
+
+            TemporaryIA.Add(vertBufferArray[arrayId], vertOffsetArray[arrayId]);
+        }
+
+        if(TemporaryIA.NumUsed > 0)
+        {
+            currentCmdBuffer.bindVertexBuffers(0, TemporaryIA.VertexBuffers, TemporaryIA.VertexOffsets);
+        }
     }
 }
 
 void ComputePendingStateVk::PrepareDispatch()
 {
 
-    if(bDescriptorSetDirty)
+    if(dsChanged)
     {
+        dsChanged = false;
         // 1. write change to descriptorSet
+        for(Uint dsWriterIndex = 0; dsWriterIndex < MaxDescriptorSetCount; dsWriterIndex++)
+        {
+            if(writerDirty[dsWriterIndex])
+            {
+                // dsWriter[dsWriterIndex].BindDescriptor(dsArray[dsWriterIndex]);
+                // dsWriter[dsWriterIndex].Update();
+            }
+        }
 
         // 2. bind descriptorSet
-        // vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSets[currentFrame], 0, nullptr);
+        currentCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, currentPipeline->GetLayout(), 0, dsNum, dsArray[0], 0, nullptr);
     }
 }
