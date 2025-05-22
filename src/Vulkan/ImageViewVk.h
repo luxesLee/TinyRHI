@@ -46,6 +46,11 @@ namespace TinyRHI
 			const DeviceData& deviceData,
 			const ImageDesc& imageDesc);
 
+		ImageViewVk(
+			const DeviceData& deviceData,
+			const ImageDesc& imageDesc,
+			vk::Image image);
+
 		void SetImageData(void* data, Uint32 dataSize)
 		{
 			imagePtr->SetImageData(data, dataSize);

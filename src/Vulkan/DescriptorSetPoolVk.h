@@ -19,7 +19,7 @@ namespace TinyRHI
 
 	using DescriptorSetLayoutBindingDescArray = std::vector<DescriptorSetLayoutBindingDesc>;
 
-	Uint32 ComputeHash(const DescriptorSetLayoutBindingDescArray& layoutBindings)
+	inline Uint32 ComputeHash(const DescriptorSetLayoutBindingDescArray& layoutBindings)
 	{
 		Uint32 hashVal = 0;
 		const Uint32 prime = 31;
@@ -150,10 +150,59 @@ namespace TinyRHI
 		// offset: 0 default
 		// range: bufferSize
 		template <Bool bUniform>
-		Bool WriteBuffer(vk::Buffer buffer, Uint32 offset, Uint32 range, Uint32 dstBinding);
+		Bool WriteBuffer(vk::Buffer buffer, Uint32 offset, Uint32 range, Uint32 dstBinding)
+		{
+			auto bufferInfo = vk::DescriptorBufferInfo()
+				.setBuffer(buffer)
+				.setOffset(offset)
+				.setRange(range);
 
-		template<bool bWriteEnable>
-		Bool WriteImage(vk::ImageView imageView, vk::Sampler sampler, Uint32 dstBinding);
+			auto writeDescriptorSet = vk::WriteDescriptorSet()
+				.setDstBinding(dstBinding)
+				.setDescriptorCount(1)
+				.setPBufferInfo(&bufferInfo);
+
+			if (bUniform)
+			{
+				writeDescriptorSet.setDescriptorType(vk::DescriptorType::eUniformBuffer);
+			}
+			else
+			{
+				writeDescriptorSet.setDescriptorType(vk::DescriptorType::eStorageBuffer);
+			}
+
+			writeDescriptorSets.push_back(writeDescriptorSet);
+			bDirty = true;
+			return true;
+		}
+
+		template<Bool bWriteEnable>
+		Bool WriteImage(vk::ImageView imageView, vk::Sampler sampler, Uint32 dstBinding)
+		{
+			auto imageInfo = vk::DescriptorImageInfo()
+				.setImageView(imageView)
+				.setSampler(sampler);
+
+			auto writeDescriptorSet = vk::WriteDescriptorSet()
+				.setDstBinding(dstBinding)
+				.setDescriptorCount(1)
+				.setPImageInfo(&imageInfo);
+
+			if (bWriteEnable)
+			{
+				imageInfo.setImageLayout(vk::ImageLayout::eGeneral);
+				writeDescriptorSet.setDescriptorType(vk::DescriptorType::eStorageImage);
+			}
+			else
+			{
+				imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+				writeDescriptorSet.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+			}
+
+			writeDescriptorSets.push_back(writeDescriptorSet);
+			bDirty = true;
+			return true;
+		}
 
 		void BindDescriptor(DescriptorSetVk* vkDescriptorSet)
 		{

@@ -30,7 +30,7 @@ namespace TinyRHI
 		};
 	};
 
-	vk::CommandBuffer BeginSingleTimeCommands(const DeviceData& deviceData)
+	inline vk::CommandBuffer BeginSingleTimeCommands(const DeviceData& deviceData)
 	{
 		auto cmdBufferAllocInfo = vk::CommandBufferAllocateInfo()
 			.setLevel(vk::CommandBufferLevel::ePrimary)	// ��Ҫ�������������ֱ���ύ����
@@ -45,7 +45,7 @@ namespace TinyRHI
 		return cmdBuffer;
 	};
 
-	void EndSingleTimeCommands(const DeviceData& deviceData, vk::CommandBuffer cmdBuffer)
+	inline void EndSingleTimeCommands(const DeviceData& deviceData, vk::CommandBuffer cmdBuffer)
 	{
 		cmdBuffer.end();
 
@@ -58,7 +58,7 @@ namespace TinyRHI
 		deviceData.logicalDevice.freeCommandBuffers(deviceData.commandPool, { cmdBuffer });
 	};
 
-	void TransitionImageLayout(const DeviceData& deviceData, vk::Image image, const ImageDesc& imageDesc, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
+	inline void TransitionImageLayout(const DeviceData& deviceData, vk::Image image, const ImageDesc& imageDesc, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
 	{
 		vk::CommandBuffer cmdBuffer = BeginSingleTimeCommands(deviceData);
 
@@ -104,7 +104,7 @@ namespace TinyRHI
 		EndSingleTimeCommands(deviceData, cmdBuffer);
 	}
 
-	Uint32 findMemoryType(vk::PhysicalDeviceMemoryProperties availableMemProperties, vk::MemoryPropertyFlags memProp, Uint32 typeFilter)
+	inline Uint32 findMemoryType(vk::PhysicalDeviceMemoryProperties availableMemProperties, vk::MemoryPropertyFlags memProp, Uint32 typeFilter)
 	{
 		for (Uint32 i = 0; i < availableMemProperties.memoryTypeCount; i++)
 		{
@@ -117,7 +117,7 @@ namespace TinyRHI
 		return 0;
 	}
 
-	vk::BufferUsageFlags ConvertBufferUsage(BufferType bufferType)
+	inline vk::BufferUsageFlags ConvertBufferUsage(BufferType bufferType)
 	{
 		vk::BufferUsageFlags usage;
 		if (bufferType.bVertex)
@@ -143,7 +143,7 @@ namespace TinyRHI
 		return usage;
 	}
 
-	vk::Format ConvertAttribType(AttribType attribType)
+	inline vk::Format ConvertAttribType(AttribType attribType)
 	{
 		switch (attribType)
 		{
@@ -165,7 +165,7 @@ namespace TinyRHI
 		return vk::Format::eUndefined;
 	}
 
-	vk::PrimitiveTopology ConvertPrimitiveTopology(InputAssemblyState::PrimitiveTopology primitiveTopology)
+	inline vk::PrimitiveTopology ConvertPrimitiveTopology(InputAssemblyState::PrimitiveTopology primitiveTopology)
 	{
 		switch (primitiveTopology)
 		{
@@ -195,7 +195,7 @@ namespace TinyRHI
 		return vk::PrimitiveTopology::ePointList;
 	}
 
-	vk::PolygonMode ConvertPolygonMode(RasterizeState::PolygonMode polygonMode)
+	inline vk::PolygonMode ConvertPolygonMode(RasterizeState::PolygonMode polygonMode)
 	{
 		switch (polygonMode)
 		{
@@ -209,7 +209,7 @@ namespace TinyRHI
 		return vk::PolygonMode::eFill;
 	}
 
-	vk::CullModeFlagBits ConvertCullMode(RasterizeState::CullMode cullMode)
+	inline vk::CullModeFlagBits ConvertCullMode(RasterizeState::CullMode cullMode)
 	{
 		switch (cullMode)
 		{
@@ -223,7 +223,7 @@ namespace TinyRHI
 		return vk::CullModeFlagBits::eNone;
 	}
 
-	vk::FrontFace ConvertFrontFace(RasterizeState::FrontFace frontFace)
+	inline vk::FrontFace ConvertFrontFace(RasterizeState::FrontFace frontFace)
 	{
 		switch (frontFace)
 		{
@@ -235,7 +235,7 @@ namespace TinyRHI
 		return vk::FrontFace::eClockwise;
 	}
 
-	vk::SampleCountFlagBits ConvertMSAASamples(MSAASamples msaaSamples)
+	inline vk::SampleCountFlagBits ConvertMSAASamples(MSAASamples msaaSamples)
 	{
 		switch (msaaSamples)
 		{
@@ -253,7 +253,7 @@ namespace TinyRHI
 		return vk::SampleCountFlagBits::e1;
 	}
 
-	vk::PipelineColorBlendAttachmentState ConvertBlendState(BlendSetting blendSetting)
+	inline vk::PipelineColorBlendAttachmentState ConvertBlendState(BlendSetting blendSetting)
 	{
 		static vk::PipelineColorBlendAttachmentState OpaqueState
 			= vk::PipelineColorBlendAttachmentState()
@@ -301,7 +301,7 @@ namespace TinyRHI
 		return OpaqueState;
 	}
 
-	vk::SamplerAddressMode ConvertAddressMode(SamplerState::AddressMode addressMode)
+	inline vk::SamplerAddressMode ConvertAddressMode(SamplerState::AddressMode addressMode)
 	{
 		switch (addressMode)
 		{
@@ -315,7 +315,7 @@ namespace TinyRHI
 		return vk::SamplerAddressMode::eRepeat;
 	}
 
-	vk::Filter ConvertFilter(SamplerState::FilterType filterType)
+	inline vk::Filter ConvertFilter(SamplerState::FilterType filterType)
 	{
 		switch (filterType)
 		{
@@ -327,7 +327,7 @@ namespace TinyRHI
 		return vk::Filter::eNearest;
 	}
 
-	vk::SamplerMipmapMode ConvertMipmapMode(SamplerState::FilterType filterType)
+	inline vk::SamplerMipmapMode ConvertMipmapMode(SamplerState::FilterType filterType)
 	{
 		switch (filterType)
 		{
@@ -339,7 +339,7 @@ namespace TinyRHI
 		return vk::SamplerMipmapMode::eNearest;
 	}
 
-	vk::BorderColor ConvertBorderColor(SamplerState::BorderColor borderColor)
+	inline vk::BorderColor ConvertBorderColor(SamplerState::BorderColor borderColor)
 	{
 		switch (borderColor)
 		{
@@ -351,7 +351,7 @@ namespace TinyRHI
 		return vk::BorderColor::eFloatOpaqueBlack;
 	}
 
-	vk::CompareOp ConvertCompOp(CompOp compOp)
+	inline vk::CompareOp ConvertCompOp(CompOp compOp)
 	{
 		switch (compOp)
 		{
@@ -375,7 +375,7 @@ namespace TinyRHI
 		return vk::CompareOp::eNever;
 	}
 
-	vk::Format ConvertFormat(Format format)
+	inline vk::Format ConvertFormat(Format format)
 	{
 		switch (format)
 		{
@@ -399,7 +399,7 @@ namespace TinyRHI
 		return vk::Format::eUndefined;
 	}
 
-	vk::AttachmentLoadOp ConvertLoadOp(AttachmentDesc::LoadOp loadOp)
+	inline vk::AttachmentLoadOp ConvertLoadOp(AttachmentDesc::LoadOp loadOp)
 	{
 		switch (loadOp)
 		{
@@ -413,7 +413,7 @@ namespace TinyRHI
 		return vk::AttachmentLoadOp::eNoneEXT;
 	}
 
-	vk::ImageType ConvertImageType(ImageDesc::ImageType imageType)
+	inline vk::ImageType ConvertImageType(ImageDesc::ImageType imageType)
 	{
 		switch (imageType)
 		{

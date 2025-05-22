@@ -24,6 +24,10 @@ namespace TinyRHI
 
 	private:
 		void InitVulkan();
+		void InitInstanceAndPhysicalDevice();
+		void InitSurface();
+		void InitDevice();
+		void InitSwapChain();
 		void InitPendingState()
 		{
 			pGfxPending = std::make_unique<GfxPendingStateVk>();
@@ -99,6 +103,11 @@ namespace TinyRHI
     private:
 		vk::UniqueInstance instance;
 		std::vector<vk::PhysicalDevice> physicalDevices;
+
+		vk::UniqueSurfaceKHR surface;
+		vk::UniqueSwapchainKHR swapChain;
+		std::vector<std::unique_ptr<ImageViewVk>> swapImageViews;
+		Uint32 swapImageIndex;
 
 		DeviceData deviceData;
 

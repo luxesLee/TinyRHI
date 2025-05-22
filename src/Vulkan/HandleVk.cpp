@@ -1,3 +1,8 @@
+#ifdef WIN_MACRO
+#define VK_USE_PLATFORM_WIN32_KHR
+#include "vulkan/vulkan_funcs.hpp"
+#endif
+
 #include "HandleVk.h"
 #include "BufferVk.h"
 #include "ShaderVk.h"
@@ -6,9 +11,24 @@
 #include <iostream>
 #include <cassert>
 
+
+
 using namespace TinyRHI;
 
 void VkHandle::InitVulkan()
+{
+	InitInstanceAndPhysicalDevice();
+	InitSurface();
+	InitDevice();
+#ifdef WIN_MACRO
+	InitSwapChain();
+#endif
+
+	cmdPoolManager = std::make_unique<CommandPoolManager>(deviceData);
+	deviceData.commandPool = cmdPoolManager->CmdPoolHandle();
+}
+
+void VkHandle::InitInstanceAndPhysicalDevice()
 {
     {
 		auto appInfo = vk::ApplicationInfo()
@@ -38,58 +58,156 @@ void VkHandle::InitVulkan()
 			}
 		}
 	}
+}
 
+void VkHandle::InitSurface()
+{
+#ifdef WIN_MACRO
+	auto surfaceCreateInfo = vk::Win32SurfaceCreateInfoKHR();
+	surface = instance->createWin32SurfaceKHRUnique(surfaceCreateInfo);
+#endif
+}
+
+void VkHandle::InitDevice()
+{
+	deviceData.queueFamilyIndices.graphicsFamilyIndex = -1;
+	deviceData.queueFamilyIndices.presentFamilyIndex = -1;
+	std::vector<vk::QueueFamilyProperties> queueFamilies = deviceData.physicalDevice.getQueueFamilyProperties();
+	for (uint32_t index = 0; index < queueFamilies.size(); index++)
 	{
-		std::vector<vk::QueueFamilyProperties> queueFamilies = deviceData.physicalDevice.getQueueFamilyProperties();
-		for (uint32_t index = 0; index < queueFamilies.size(); index++)
+		if (queueFamilies[index].queueFlags & vk::QueueFlagBits::eGraphics && deviceData.queueFamilyIndices.graphicsFamilyIndex == -1)
 		{
-			if (queueFamilies[index].queueFlags & vk::QueueFlagBits::eGraphics && deviceData.queueFamilyIndices.graphicsFamilyIndex == -1)
-			{
-				deviceData.queueFamilyIndices.graphicsFamilyIndex = index;
-			}
-
-			// if (selectPhysicalDevice.getSurfaceSupportKHR(index, surface.get()) && queueFamilyIndices.presentFamilyIndex == -1)
-			// {
-			// 	queueFamilyIndices.presentFamilyIndex = index;
-			// }
+			deviceData.queueFamilyIndices.graphicsFamilyIndex = index;
 		}
 
-		std::vector<uint32_t> uniqueQueueFamilyIndices =
+#ifdef WIN_MACRO
+		if (deviceData.physicalDevice.getSurfaceSupportKHR(index, surface.get()) && deviceData.queueFamilyIndices.presentFamilyIndex == -1)
 		{
-			deviceData.queueFamilyIndices.graphicsFamilyIndex,
-			deviceData.queueFamilyIndices.presentFamilyIndex
-		};
-		std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
-		float queuePriority = 1.0f;
-		for (uint32_t queueFamily : uniqueQueueFamilyIndices)
-		{
-			auto queueCreateInfo = vk::DeviceQueueCreateInfo()
-				.setQueueFamilyIndex(queueFamily)
-				.setQueueCount(1)
-				.setPQueuePriorities(&queuePriority);
-
-			queueCreateInfos.push_back(queueCreateInfo);
+			deviceData.queueFamilyIndices.presentFamilyIndex = index;
 		}
-
-		auto deviceFeatures = vk::PhysicalDeviceFeatures();
-
-		auto deviceCreateInfo = vk::DeviceCreateInfo()
-			.setQueueCreateInfoCount((uint32_t)queueCreateInfos.size())
-			.setPQueueCreateInfos(queueCreateInfos.data())
-			.setPEnabledFeatures(&deviceFeatures);
-
-		deviceData.logicalDevice = deviceData.physicalDevice.createDevice(deviceCreateInfo);
-		deviceData.graphicsQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.graphicsFamilyIndex, 0);
-		deviceData.presentQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.presentFamilyIndex, 0);
+#endif
 	}
 
-	cmdPoolManager = std::make_unique<CommandPoolManager>(deviceData);
-	deviceData.commandPool = cmdPoolManager->CmdPoolHandle();
+	std::vector<uint32_t> uniqueQueueFamilyIndices =
+	{
+		deviceData.queueFamilyIndices.graphicsFamilyIndex,
+#ifdef WIN_MACRO
+		deviceData.queueFamilyIndices.presentFamilyIndex
+#endif
+	};
+	std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+	float queuePriority = 1.0f;
+	for (uint32_t queueFamily : uniqueQueueFamilyIndices)
+	{
+		auto queueCreateInfo = vk::DeviceQueueCreateInfo()
+			.setQueueFamilyIndex(queueFamily)
+			.setQueueCount(1)
+			.setPQueuePriorities(&queuePriority);
+
+		queueCreateInfos.push_back(queueCreateInfo);
+	}
+
+	auto deviceFeatures = vk::PhysicalDeviceFeatures();
+
+	auto deviceCreateInfo = vk::DeviceCreateInfo()
+		.setQueueCreateInfoCount((uint32_t)queueCreateInfos.size())
+		.setPQueueCreateInfos(queueCreateInfos.data())
+		.setPEnabledFeatures(&deviceFeatures);
+
+	deviceData.logicalDevice = deviceData.physicalDevice.createDevice(deviceCreateInfo);
+	if(deviceData.queueFamilyIndices.graphicsFamilyIndex != -1)
+	{
+		deviceData.graphicsQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.graphicsFamilyIndex, 0);
+	}
+
+	if(deviceData.queueFamilyIndices.presentFamilyIndex != -1)
+	{
+		deviceData.presentQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.presentFamilyIndex, 0);
+	}
+}
+
+void VkHandle::InitSwapChain()
+{
+	auto capabilities = deviceData.physicalDevice.getSurfaceCapabilitiesKHR(surface.get());
+	auto formats = deviceData.physicalDevice.getSurfaceFormatsKHR(surface.get());
+	auto presentModes = deviceData.physicalDevice.getSurfacePresentModesKHR(surface.get());
+
+	auto getSwapChainSurfaceFormt = [&](const std::vector<vk::SurfaceFormatKHR>& availableFormats)
+	{
+		vk::SurfaceFormatKHR bestFormat = { vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear };
+		for (const auto& availableFormat : availableFormats) {
+			if (availableFormat.format == bestFormat.format && availableFormat.colorSpace == bestFormat.colorSpace) {
+				return availableFormat;
+			}
+		}
+		return bestFormat;
+	};
+
+	auto getSwapPresentMode = [&](const std::vector<vk::PresentModeKHR>& availablePresentModes, vk::PresentModeKHR preferredMode)
+	{
+		for (const auto& availablePresentMode : availablePresentModes)
+		{
+			if (availablePresentMode == preferredMode)
+			{
+				return preferredMode;
+			}
+		}
+		return vk::PresentModeKHR::eFifo;
+	};
+
+	auto getSwapExtent = [&](const vk::SurfaceCapabilitiesKHR& capabilities) -> vk::Extent2D
+	{
+		assert(capabilities.currentExtent.width != (std::numeric_limits<Uint32>::max)());
+		return capabilities.currentExtent;
+	};
+
+	auto surfaceFormat = getSwapChainSurfaceFormt(formats);
+	auto presentMode = getSwapPresentMode(presentModes, vk::PresentModeKHR::eMailbox);
+	auto extent = getSwapExtent(capabilities);
+	Uint32 imageCount = (std::max)(capabilities.minImageCount, 2U);
+
+	auto createInfo = vk::SwapchainCreateInfoKHR()
+		.setSurface(surface.get())
+		.setPreTransform(capabilities.currentTransform)
+		.setImageFormat(surfaceFormat.format)
+		.setImageColorSpace(surfaceFormat.colorSpace)
+		.setPresentMode(presentMode)
+		.setImageExtent(extent)
+		.setImageArrayLayers(1)
+		.setMinImageCount(imageCount)
+		.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
+		.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
+		.setClipped(true)
+		.setOldSwapchain(nullptr)
+		;
+	
+	uint32_t familyIndices[] = { deviceData.queueFamilyIndices.graphicsFamilyIndex, deviceData.queueFamilyIndices.presentFamilyIndex };
+	if(deviceData.queueFamilyIndices.graphicsFamilyIndex != deviceData.queueFamilyIndices.presentFamilyIndex)
+	{
+		createInfo.setImageSharingMode(vk::SharingMode::eConcurrent)
+			.setQueueFamilyIndexCount(2)
+			.setPQueueFamilyIndices(familyIndices);
+	}
+	else
+	{
+		createInfo.setImageSharingMode(vk::SharingMode::eExclusive);
+	}
+
+	swapChain = deviceData.logicalDevice.createSwapchainKHRUnique(createInfo);
+
+	std::vector<vk::Image> swapImages = deviceData.logicalDevice.getSwapchainImagesKHR(swapChain.get());
+	swapImageViews.clear();
+	ImageDesc imageDesc;
+	for(Uint i = 0; i < imageCount; i++)
+	{
+		swapImageViews.push_back(std::make_unique<ImageViewVk>(deviceData, imageDesc, swapImages[i]));
+	}
+
 }
 
 IGraphicsPipeline* VkHandle::CreateGrpahicsPipeline(const GraphicsPipelineDesc &gfxPipelineDesc)
 {
-	return new GraphicsPipelineVk(deviceData, gfxPipelineDesc);
+    return new GraphicsPipelineVk(deviceData, gfxPipelineDesc);
 }
 
 IComputePipeline* VkHandle::CreateComputePipeline(const ComputePipelineDesc &computePipelineDesc)
@@ -157,10 +275,21 @@ Uint32 VkHandle::GetUsedVRAM() const
 
 void VkHandle::BeginFrame()
 {
+	swapImageIndex = deviceData.logicalDevice.acquireNextImageKHR(swapChain.get(), UINT64_MAX, {}, {}).value;
 }
 
 void VkHandle::EndFrame()
 {
+	vk::PresentInfoKHR presentInfo = vk::PresentInfoKHR()
+		.setSwapchainCount(1)
+		.setPSwapchains(&swapChain.get())
+		.setPImageIndices(&swapImageIndex)
+		// .setWaitSemaphoreCount()
+		// .setPWaitSemaphores()
+		;
+	
+	auto result = deviceData.presentQueue.presentKHR(presentInfo);
+	assert(result == vk::Result::eSuccess);
 }
 
 void VkHandle::BeginCommand()
@@ -323,7 +452,7 @@ void VkHandle::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint3
 {
 	pGfxPending->PrepareDraw();
 
-	numInstances = std::max(1U, numInstances);
+	numInstances = (std::max)(1U, numInstances);
 	Uint numVertices = 0;
 
 	currentCmd.draw(numVertices, numInstances, baseVertexIndex, 0);

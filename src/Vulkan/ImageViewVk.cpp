@@ -104,3 +104,24 @@ ImageViewVk::ImageViewVk(
         .setSubresourceRange(subresourceRange);
     imageView = deviceData.logicalDevice.createImageViewUnique(imageViewInfo);
 }
+
+ImageViewVk::ImageViewVk(const DeviceData &deviceData, const ImageDesc &imageDesc, vk::Image image)
+{
+    vk::ImageViewType viewType = (imageDesc.imageType == ImageDesc::ImageType::e2D) ?
+        vk::ImageViewType::e2D : vk::ImageViewType::e3D;
+    vk::Format format = ConvertFormat(imageDesc.format);
+
+    auto subresourceRange = vk::ImageSubresourceRange()
+        .setAspectMask(imageDesc.bDepth ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor)
+        .setBaseMipLevel(imageDesc.imageViewDesc.baseMipLevel)
+        .setLevelCount(imageDesc.imageViewDesc.mipLevelsCount)
+        .setBaseArrayLayer(imageDesc.imageViewDesc.baseArrayLayer)
+        .setLayerCount(imageDesc.imageViewDesc.arrayLayersCount);
+
+    auto imageViewInfo = vk::ImageViewCreateInfo()
+        .setImage(image)
+        .setViewType(viewType)
+        .setFormat(format)
+        .setSubresourceRange(subresourceRange);
+    imageView = deviceData.logicalDevice.createImageViewUnique(imageViewInfo);
+}

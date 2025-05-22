@@ -46,7 +46,7 @@ namespace TinyRHI
         }
 
     protected:
-        template<bool bWriteEnable>
+        template<Bool bWriteEnable>
         void SetTexture(TextureVk* vkTexture, Uint setId, Uint bindingId)
         {
             Dirty(dsWriter[setId].WriteImage<bWriteEnable>(vkTexture->ImageViewHandle(), vkTexture->SamplerHandle(), bindingId), setId);
@@ -196,8 +196,12 @@ namespace TinyRHI
     class ComputePendingStateVk : public PendingStateVk
     {
     public:
-        ComputePendingStateVk();
-        ~ComputePendingStateVk();
+        ComputePendingStateVk()
+        {
+        }
+        ~ComputePendingStateVk()
+        {
+        }
 
         Bool SetPipeline(ComputePipelineVk* newPipeline)
         {

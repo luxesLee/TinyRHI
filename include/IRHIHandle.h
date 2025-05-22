@@ -55,7 +55,7 @@ namespace TinyRHI
 		virtual void SetScissor(Extent2D minExt, Extent2D maxExt) = 0;
 
 		
-		virtual void SetAttachment() = 0;
+		// virtual void SetAttachment() = 0;
 
 		virtual void SetSamplerTexture(ITexture* texture, Uint setId, Uint bindingId) = 0;
 		virtual void SetStorageTexture(ITexture* texture, Uint setId, Uint bindingId) = 0;

@@ -34,6 +34,13 @@ foreach(file ${SRC_FILES})
 endforeach()
 
 add_library(TinyRHI STATIC ${SRC_FILES})
+
+# if(WIN32)
+#     target_compile_definitions(TinyRHI PRIVATE WIN_MACRO)
+# elseif(UNIX)
+#     target_compile_definitions(TinyRHI PRIVATE LINUX_MACRO)
+# endif()
+
 target_include_directories(TinyRHI PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(TinyRHI PRIVATE ${Vulkan_INCLUDE_DIRS})
 target_link_libraries(TinyRHI ${Vulkan_LIBRARIES})
@@ -47,5 +54,11 @@ enable_testing()
 
 add_executable(my_test1 test/test_min_example.cpp)
 target_link_libraries(my_test1 PRIVATE TinyRHI)
+
+set(GLFW_BUILD_DOCS OFF)
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_BUILD_EXAMPLES OFF)
+add_subdirectory(third_party/glfw)
+target_link_libraries(my_test1 PUBLIC glfw)
 
 add_test(NAME TinyRHITest COMMAND my_test1)
