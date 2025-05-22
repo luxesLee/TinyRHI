@@ -1,15 +1,11 @@
 #define USE_VULKAN 1
-#include "IRHIHandle.h"
-
-
+// #include
+#include <iostream>
 
 int main()
 {
-    TinyRHI::IRHIHandle* handle;
-    
-    
-
-
-
-
+    {
+        std::cout << "handle nullptr" << std::endl;
+    }
+    return 0;
 }

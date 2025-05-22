@@ -56,3 +56,23 @@ void HandleOgl::Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uin
 {
     glDispatchCompute(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
 }
+
+void HandleOgl::SetSamplerTexture(ITexture *texture, Uint setId, Uint bindingId)
+{
+    
+}
+
+void HandleOgl::SetStorageTexture(ITexture *texture, Uint setId, Uint bindingId)
+{
+
+}
+
+void HandleOgl::SetStorageBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
+{
+
+}
+
+void HandleOgl::SetUniformBuffer(IBuffer *Buffer, Uint setId, Uint bindingId)
+{
+
+}

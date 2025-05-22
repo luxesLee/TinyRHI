@@ -11,7 +11,7 @@ GraphicsPipelineVk::GraphicsPipelineVk(
     RenderPassVk* vkRenderPass = dynamic_cast<RenderPassVk*>(graphicsPipelineDesc.renderPass);
     ShaderVk<IShader::Stage::Vertex>* vkVertShader = dynamic_cast<ShaderVk<IShader::Stage::Vertex>*>(graphicsPipelineDesc.vertShader);
     ShaderVk<IShader::Stage::Pixel>* vkPixelShader = dynamic_cast<ShaderVk<IShader::Stage::Pixel>*>(graphicsPipelineDesc.pixelShader);
-    this->pipelineLayout = vkPipelineLayout->Handle();
+    this->pipelineLayout = vkPipelineLayout->PipelineLayoutHandle();
 
     vk::PipelineShaderStageCreateInfo shaderStageCreateInfo[] = { vkVertShader->Handle(), vkPixelShader->Handle() };
 
@@ -113,7 +113,7 @@ ComputePipelineVk::ComputePipelineVk(
 {
     PipelineLayoutVk* vkPipelineLayout = dynamic_cast<PipelineLayoutVk*>(computePipelineDesc.pipelineLayout);
     ShaderVk<IShader::Stage::Compute>* vkCompShader = dynamic_cast<ShaderVk<IShader::Stage::Compute>*>(computePipelineDesc.compShader);
-    this->pipelineLayout = vkPipelineLayout->Handle();
+    this->pipelineLayout = vkPipelineLayout->PipelineLayoutHandle();
 
     auto pipelineCreateInfo = vk::ComputePipelineCreateInfo()
         .setFlags(vk::PipelineCreateFlags())

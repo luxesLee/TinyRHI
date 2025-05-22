@@ -26,10 +26,9 @@ namespace TinyRHI
 		virtual IShader* CreateComputeShader(ShaderDesc& shaderDesc) = 0;
 
 		virtual IBuffer* CreateBuffer(const BufferDesc& bufferDesc) = 0;
-		virtual IImageView* CreateImageView(const ImageDesc& imageDesc) = 0;
-		virtual IImageView* CreateImageViewWithData(const ImageDesc& imageDesc) = 0;
-
-		virtual IFramebuffer* CreateFrameBuffer(const FramebufferDesc& framebufferDesc) = 0;
+		virtual IBuffer* CreateBufferWithData(const BufferDesc& bufferDesc, void* data, Uint32 dataSize) = 0;
+		virtual ITexture* CreateTexture(const ImageDesc& imageDesc, const SamplerState& samplerState) = 0;
+		virtual ITexture* CreateTextureWithData(const ImageDesc& imageDesc, const SamplerState& samplerState, void* data, Uint32 dataSize) = 0;
 
 		virtual Uint32 GetTotalVRAM() const = 0;
 		virtual Uint32 GetUsedVRAM() const = 0;
@@ -55,9 +54,13 @@ namespace TinyRHI
 		virtual void SetViewport(Extent3D minExt, Extent3D maxExt) = 0;
 		virtual void SetScissor(Extent2D minExt, Extent2D maxExt) = 0;
 
-		virtual void SetTexture(IShader* shader) = 0;
-		virtual void SetBuffer(IShader::Stage stage, IBuffer* buffer, Uint32 bufferIndex) = 0;
-		virtual void SetUniformBuffer(IShader::Stage stage, IBuffer* uniformBuffer, Int32 bufferIndex, IShader* shader) = 0;
+		
+		virtual void SetAttachment() = 0;
+
+		virtual void SetSamplerTexture(ITexture* texture, Uint setId, Uint bindingId) = 0;
+		virtual void SetStorageTexture(ITexture* texture, Uint setId, Uint bindingId) = 0;
+		virtual void SetStorageBuffer(IBuffer* buffer, Uint setId, Uint bindingId) = 0;
+		virtual void SetUniformBuffer(IBuffer* Buffer, Uint setId, Uint bindingId) = 0;
 
 		virtual void DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances) = 0;
 		virtual void DrawPrimitiveIndirect(IBuffer* argumentBuffer, Uint32 argumentOffset) = 0;

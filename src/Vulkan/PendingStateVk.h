@@ -1,15 +1,14 @@
-#pragma
+#pragma once
 #include <cassert>
 #include "PipelineVk.h"
 #include "DescriptorSetPoolVk.h"
+#include "ImageViewVk.h"
+#include "BufferVk.h"
 
 namespace TinyRHI
 {
     #define MaxVertexCount 20
     #define MaxDescriptorSetCount 4
-
-    class TextureVk;
-    class BufferVk;
 
     class PendingStateVk
     {

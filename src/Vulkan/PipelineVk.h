@@ -11,7 +11,7 @@ namespace TinyRHI
 	public:
 		PipelineLayoutVk(
 			const DeviceData& deviceData, 
-			std::vector<DescriptorSetLayoutVk> _vkDescriptorSetLayouts)
+			std::vector<DescriptorSetLayoutVk>& _vkDescriptorSetLayouts)
 			: vkDescriptorSetLayouts(_vkDescriptorSetLayouts)
 		{
 			std::vector<vk::DescriptorSetLayout> descriptorSetLayouts(vkDescriptorSetLayouts.size());
@@ -39,7 +39,7 @@ namespace TinyRHI
 
 	private:
 		vk::UniquePipelineLayout pipelineLayout;
-		std::vector<DescriptorSetLayoutVk> vkDescriptorSetLayouts;
+		std::vector<DescriptorSetLayoutVk>& vkDescriptorSetLayouts;
 	};
 
 	class GraphicsPipelineVk : public IGraphicsPipeline

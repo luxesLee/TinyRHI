@@ -3,19 +3,17 @@
 #include "HeaderVk.h"
 #include "CommandPoolVk.h"
 #include <memory>
-
+#include "PendingStateVk.h"
 
 namespace TinyRHI
 {
-	class GfxPendingStateVk;
-	class ComputePendingStateVk;
-
     class VkHandle : public IRHIHandle
     {
     public:
         VkHandle()
 		{
 			InitVulkan();
+			InitPendingState();
 		}
         ~VkHandle()
 		{
@@ -28,7 +26,8 @@ namespace TinyRHI
 		void InitVulkan();
 		void InitPendingState()
 		{
-
+			pGfxPending = std::make_unique<GfxPendingStateVk>();
+			pComputePending = std::make_unique<ComputePendingStateVk>();
 		}
 
 	public:
@@ -44,8 +43,8 @@ namespace TinyRHI
 
 		virtual IBuffer* CreateBuffer(const BufferDesc& bufferDesc);
 		virtual IBuffer* CreateBufferWithData(const BufferDesc& bufferDesc, void* data, Uint32 dataSize);
-		virtual IImageView* CreateImageView(const ImageDesc& imageDesc);
-		virtual IImageView* CreateImageViewWithData(const ImageDesc& imageDesc, void* data, Uint32 dataSize);
+		virtual ITexture* CreateTexture(const ImageDesc& imageDesc, const SamplerState& samplerState);
+		virtual ITexture* CreateTextureWithData(const ImageDesc& imageDesc, const SamplerState& samplerState, void* data, Uint32 dataSize);
 
 		virtual Uint32 GetTotalVRAM() const;
 		virtual Uint32 GetUsedVRAM() const;
@@ -56,7 +55,7 @@ namespace TinyRHI
 		// ExcuteOrder
 		// BeginFrame -> 
 		// 	(BeginCommand -> 
-		// 		(BeginRenderPass -> EndRenderPass) * m -> 
+		// 		(BeginRenderPass -> setPipeline -> setxxx -> draw -> EndRenderPass) * m -> 
 		// 	EndCommand) * n -> 
 		// EndFrame
 		
@@ -78,8 +77,10 @@ namespace TinyRHI
 		virtual void SetViewport(Extent3D minExt, Extent3D maxExt);
 		virtual void SetScissor(Extent2D minExt, Extent2D maxExt);
 
-		virtual void SetShaderTexture(IShader* shader) = 0;
-		virtual void SetShaderUniformBuffer(IShader::Stage stage, IBuffer* uniformBuffer, Int32 bufferIndex, IShader* shader) = 0;
+		virtual void SetSamplerTexture(ITexture* texture, Uint setId, Uint bindingId);
+		virtual void SetStorageTexture(ITexture* texture, Uint setId, Uint bindingId);
+		virtual void SetStorageBuffer(IBuffer* buffer, Uint setId, Uint bindingId);
+		virtual void SetUniformBuffer(IBuffer* Buffer, Uint setId, Uint bindingId);
 
         virtual void DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances);
 		virtual void DrawPrimitiveIndirect(IBuffer* argumentBuffer, Uint32 argumentOffset);
@@ -105,6 +106,7 @@ namespace TinyRHI
 
 		vk::CommandBuffer currentCmd;
 
+		Bool bCurrentGfx;
 		std::unique_ptr<GfxPendingStateVk> pGfxPending;
 		std::unique_ptr<ComputePendingStateVk> pComputePending;
     };

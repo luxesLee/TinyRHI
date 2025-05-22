@@ -42,8 +42,10 @@ set_target_properties(TinyRHI PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 # Test
-# include(CTest)
-# enable_testing()
+include(CTest)
+enable_testing()
 
-# add_executable(my_test1 test/test_example.cpp)
-# add_test(NAME TinyRHITest COMMAND my_test1)
+add_executable(my_test1 test/test_min_example.cpp)
+target_link_libraries(my_test1 PRIVATE TinyRHI)
+
+add_test(NAME TinyRHITest COMMAND my_test1)

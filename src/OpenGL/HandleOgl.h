@@ -42,8 +42,10 @@ namespace TinyRHI
 		virtual void SetViewport(Extent3D minExt, Extent3D maxExt) = 0;
 		virtual void SetScissor(Bool bEnable, Extent2D minExt, Extent2D maxExt) = 0;
 
-		virtual void SetShaderTexture(IShader* shader) = 0;
-		virtual void SetShaderUniformBuffer(IShader::Stage stage, IBuffer* uniformBuffer, Int32 bufferIndex, IShader* shader) = 0;
+		virtual void SetSamplerTexture(ITexture* texture, Uint setId, Uint bindingId);
+		virtual void SetStorageTexture(ITexture* texture, Uint setId, Uint bindingId);
+		virtual void SetStorageBuffer(IBuffer* buffer, Uint setId, Uint bindingId);
+		virtual void SetUniformBuffer(IBuffer* Buffer, Uint setId, Uint bindingId);
 
         virtual void DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances);
 		virtual void DrawPrimitiveIndirect(IBuffer* argumentBuffer, Uint32 argumentOffset);

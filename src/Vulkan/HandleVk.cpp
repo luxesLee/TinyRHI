@@ -3,7 +3,6 @@
 #include "ShaderVk.h"
 #include "ImageViewVk.h"
 #include "PipelineVk.h"
-#include "PendingStateVk.h"
 #include <iostream>
 #include <cassert>
 
@@ -125,16 +124,16 @@ IBuffer* VkHandle::CreateBufferWithData(const BufferDesc &bufferDesc, void *data
     return pVkBuffer;
 }
 
-IImageView* VkHandle::CreateImageView(const ImageDesc &imageDesc)
+ITexture* VkHandle::CreateTexture(const ImageDesc& imageDesc, const SamplerState& samplerState)
 {
-    return new ImageViewVk(deviceData, imageDesc);
+    return new TextureVk(deviceData, imageDesc, samplerState);
 }
 
-IImageView* VkHandle::CreateImageViewWithData(const ImageDesc &imageDesc, void *data, Uint32 dataSize)
+ITexture* VkHandle::CreateTextureWithData(const ImageDesc& imageDesc, const SamplerState& samplerState, void* data, Uint32 dataSize)
 {
-	auto pVkImageView = new ImageViewVk(deviceData, imageDesc);
-	pVkImageView->SetImageData(data, dataSize);
-    return pVkImageView;
+	auto pVkTexture = new TextureVk(deviceData, imageDesc, samplerState);
+	pVkTexture->SetImageData(data, dataSize);
+    return pVkTexture;
 }
 
 Uint32 VkHandle::GetTotalVRAM() const
@@ -198,6 +197,7 @@ void VkHandle::EndRenderPass()
 void VkHandle::Commit()
 {
 	// cmdPoolManager->SubmitCmdBuffer();
+	std::cout << "1 2 3" << std::endl;
 }
 
 void VkHandle::SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline)
@@ -207,6 +207,7 @@ void VkHandle::SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline)
 	{
 		if(pGfxPending->SetPipeline(vkGfxPipeline))
 		{
+			bCurrentGfx = true;
 			pGfxPending->SetCmdBuffer(currentCmd);
 			pGfxPending->Bind();
 			pGfxPending->MarkUpdateDynamicStates();
@@ -221,6 +222,7 @@ void VkHandle::SetComputePipelineState(IComputePipeline *computePipeline)
 	{
 		if(pComputePending->SetPipeline(vkComputePipeline))
 		{
+			bCurrentGfx = false;
 			vkComputePipeline->Bind(currentCmd);
 			pComputePending->SetCmdBuffer(currentCmd);
 		}
@@ -251,6 +253,70 @@ void VkHandle::SetScissor(Extent2D minExt, Extent2D maxExt)
 	rect2D.setOffset(vk::Offset2D(minExt.width, minExt.height));
 	rect2D.setExtent(vk::Extent2D(maxExt.width - minExt.width, maxExt.height - minExt.height));
 	pGfxPending->SetScissor(rect2D);
+}
+
+void VkHandle::SetSamplerTexture(ITexture *texture, Uint setId, Uint bindingId)
+{
+	TextureVk* vkTexture = dynamic_cast<TextureVk*>(texture);
+	if(vkTexture)
+	{
+		if(bCurrentGfx)
+		{
+			pGfxPending->SetSamplerImage(vkTexture, setId, bindingId);
+		}
+		else
+		{
+			pComputePending->SetSamplerImage(vkTexture, setId, bindingId);
+		}
+	}
+}
+
+void VkHandle::SetStorageTexture(ITexture *texture, Uint setId, Uint bindingId)
+{
+	TextureVk* vkTexture = dynamic_cast<TextureVk*>(texture);
+	if(vkTexture)
+	{
+		if(bCurrentGfx)
+		{
+			pGfxPending->SetStorageImage(vkTexture, setId, bindingId);
+		}
+		else
+		{
+			pComputePending->SetStorageImage(vkTexture, setId, bindingId);
+		}
+	}
+}
+
+void VkHandle::SetStorageBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
+{
+	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
+	if(vkBuffer)
+	{
+		if(bCurrentGfx)
+		{
+			pGfxPending->SetStorageBuffer(vkBuffer, setId, bindingId);
+		}
+		else
+		{
+			pComputePending->SetStorageBuffer(vkBuffer, setId, bindingId);
+		}
+	}
+}
+
+void VkHandle::SetUniformBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
+{
+	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
+	if(vkBuffer)
+	{
+		if(bCurrentGfx)
+		{
+			pGfxPending->SetUniformBuffer(vkBuffer, setId, bindingId);
+		}
+		else
+		{
+			pComputePending->SetUniformBuffer(vkBuffer, setId, bindingId);
+		}
+	}
 }
 
 void VkHandle::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances)
