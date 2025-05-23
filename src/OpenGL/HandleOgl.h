@@ -1,15 +1,27 @@
 #pragma once
 #include "IRHIHandle.h"
 
+class GLFWwindow;
+
 namespace TinyRHI
 {
     class HandleOgl : public IRHIHandle
     {
     public:
-        HandleOgl();
-        ~HandleOgl();
+        explicit HandleOgl(GLFWwindow* _window)
+		{
+			InitOpenGL();
+		}
+        ~HandleOgl()
+		{
+		}
         HandleOgl(const HandleOgl&) = delete;
         HandleOgl& operator=(const HandleOgl&) = delete;
+
+	private:
+		void InitOpenGL();
+
+	public:
 
         // 
         // ------------------------------------------------------------------------------------------------

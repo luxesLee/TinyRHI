@@ -35,11 +35,13 @@ endforeach()
 
 add_library(TinyRHI STATIC ${SRC_FILES})
 
-# if(WIN32)
-#     target_compile_definitions(TinyRHI PRIVATE WIN_MACRO)
-# elseif(UNIX)
-#     target_compile_definitions(TinyRHI PRIVATE LINUX_MACRO)
-# endif()
+if(WIN32)
+    target_compile_definitions(TinyRHI PRIVATE WIN_MACRO)
+elseif(UNIX)
+    target_compile_definitions(TinyRHI PRIVATE LINUX_MACRO)
+endif()
+
+# target_compile_definitions(TinyRHI PRIVATE DEBUG_VULKAN_MACRO)
 
 target_include_directories(TinyRHI PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(TinyRHI PRIVATE ${Vulkan_INCLUDE_DIRS})

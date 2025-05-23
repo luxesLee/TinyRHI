@@ -5,9 +5,8 @@
 
 using namespace TinyRHI;
 
-HandleOgl::HandleOgl()
+void TinyRHI::HandleOgl::InitOpenGL()
 {
-    // Init Ogl Environment
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -16,10 +15,6 @@ HandleOgl::HandleOgl()
     {
         std::cout << "glad load failed" << std::endl;
     }
-}
-
-HandleOgl::~HandleOgl()
-{
 }
 
 IShader* HandleOgl::CreateVertexShader(ShaderDesc &shaderDesc)

@@ -1,29 +1,31 @@
-#ifdef WIN_MACRO
-#define VK_USE_PLATFORM_WIN32_KHR
-#include "vulkan/vulkan_funcs.hpp"
-#endif
+#include <iostream>
+#include <set>
+#include <cassert>
+
+#define GLFW_INCLUDE_VULKAN
+#include "GLFW/glfw3.h"
 
 #include "HandleVk.h"
 #include "BufferVk.h"
 #include "ShaderVk.h"
 #include "ImageViewVk.h"
 #include "PipelineVk.h"
-#include <iostream>
-#include <cassert>
-
-
 
 using namespace TinyRHI;
+
+VkHandle::VkHandle(GLFWwindow *_window)
+	: window(_window)
+{
+	InitVulkan();
+	InitPendingState();
+}
 
 void VkHandle::InitVulkan()
 {
 	InitInstanceAndPhysicalDevice();
 	InitSurface();
 	InitDevice();
-#ifdef WIN_MACRO
-	InitSwapChain();
-#endif
-
+	// InitSwapChain();
 	cmdPoolManager = std::make_unique<CommandPoolManager>(deviceData);
 	deviceData.commandPool = cmdPoolManager->CmdPoolHandle();
 }
@@ -31,6 +33,17 @@ void VkHandle::InitVulkan()
 void VkHandle::InitInstanceAndPhysicalDevice()
 {
     {
+        uint32_t glfwExtensionCount = 0;
+        const char** glfwExtensions = glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+		std::vector<const char*> validationLayers;
+
+#ifdef DEBUG_VULKAN_MACRO
+		validationLayers.push_back("VK_LAYER_KHRONOS_validation");
+		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+#endif
+
 		auto appInfo = vk::ApplicationInfo()
 			.setPApplicationName("TinyRHI")
 			.setApplicationVersion(VK_MAKE_VERSION(1, 0, 0))
@@ -38,8 +51,27 @@ void VkHandle::InitInstanceAndPhysicalDevice()
 			.setEngineVersion(VK_MAKE_VERSION(1, 0, 0))
 			.setApiVersion(VK_API_VERSION_1_3);
 		auto instanceCreateInfo = vk::InstanceCreateInfo()
-			.setPApplicationInfo(&appInfo);
+			.setPApplicationInfo(&appInfo)
+			.setEnabledExtensionCount(extensions.size())
+			.setPpEnabledExtensionNames(extensions.data())
+			.setEnabledLayerCount(validationLayers.size())
+			.setPpEnabledLayerNames(validationLayers.data());
 		instance = vk::createInstanceUnique(instanceCreateInfo);
+
+#ifdef DEBUG_VULKAN_MACRO
+		vk::DebugUtilsMessengerCreateInfoEXT createInfo = vk::DebugUtilsMessengerCreateInfoEXT()
+			.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning 
+				| vk::DebugUtilsMessageSeverityFlagBitsEXT::eError 
+				| vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo)
+			.setMessageType(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral 
+				| vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance 
+				| vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation)
+			.setPfnUserCallback(DebugMessageCallback)
+			.setPUserData(nullptr);
+	
+		loader = vk::DispatchLoaderDynamic(instance.get(), vkGetInstanceProcAddr);
+		debugUtilsMessenger = instance->createDebugUtilsMessengerEXTUnique(createInfo, nullptr, loader);
+#endif
 	}
 
 	{
@@ -62,10 +94,10 @@ void VkHandle::InitInstanceAndPhysicalDevice()
 
 void VkHandle::InitSurface()
 {
-#ifdef WIN_MACRO
-	auto surfaceCreateInfo = vk::Win32SurfaceCreateInfoKHR();
-	surface = instance->createWin32SurfaceKHRUnique(surfaceCreateInfo);
-#endif
+	if(glfwCreateWindowSurface(instance.get(), window, nullptr, &surface) != VK_SUCCESS)
+	{
+		assert(false);
+	}
 }
 
 void VkHandle::InitDevice()
@@ -75,25 +107,27 @@ void VkHandle::InitDevice()
 	std::vector<vk::QueueFamilyProperties> queueFamilies = deviceData.physicalDevice.getQueueFamilyProperties();
 	for (uint32_t index = 0; index < queueFamilies.size(); index++)
 	{
-		if (queueFamilies[index].queueFlags & vk::QueueFlagBits::eGraphics && deviceData.queueFamilyIndices.graphicsFamilyIndex == -1)
+		if (queueFamilies[index].queueFlags & vk::QueueFlagBits::eGraphics 
+			&& queueFamilies[index].queueCount > 0
+			&& deviceData.queueFamilyIndices.graphicsFamilyIndex == Uint32(-1))
 		{
 			deviceData.queueFamilyIndices.graphicsFamilyIndex = index;
 		}
 
-#ifdef WIN_MACRO
-		if (deviceData.physicalDevice.getSurfaceSupportKHR(index, surface.get()) && deviceData.queueFamilyIndices.presentFamilyIndex == -1)
+		if (deviceData.physicalDevice.getSurfaceSupportKHR(index, surface) 
+			&& queueFamilies[index].queueCount > 0
+			&& deviceData.queueFamilyIndices.presentFamilyIndex == Uint32(-1))
 		{
 			deviceData.queueFamilyIndices.presentFamilyIndex = index;
 		}
-#endif
 	}
+	assert(deviceData.queueFamilyIndices.graphicsFamilyIndex != Uint32(-1));
+	assert(deviceData.queueFamilyIndices.presentFamilyIndex != Uint32(-1));
 
-	std::vector<uint32_t> uniqueQueueFamilyIndices =
+	std::set<Uint32> uniqueQueueFamilyIndices =
 	{
 		deviceData.queueFamilyIndices.graphicsFamilyIndex,
-#ifdef WIN_MACRO
 		deviceData.queueFamilyIndices.presentFamilyIndex
-#endif
 	};
 	std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 	float queuePriority = 1.0f;
@@ -109,28 +143,39 @@ void VkHandle::InitDevice()
 
 	auto deviceFeatures = vk::PhysicalDeviceFeatures();
 
+	std::vector<const char*> deviceExtensions = 
+	{
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+	};
+
+#ifdef DEBUG_VULKAN_MACRO
+	std::vector<const char*> validationLayers;
+	validationLayers.push_back("VK_LAYER_KHRONOS_validation");
+#endif
+
 	auto deviceCreateInfo = vk::DeviceCreateInfo()
 		.setQueueCreateInfoCount((uint32_t)queueCreateInfos.size())
 		.setPQueueCreateInfos(queueCreateInfos.data())
-		.setPEnabledFeatures(&deviceFeatures);
+		.setPEnabledFeatures(&deviceFeatures)
+#ifdef DEBUG_VULKAN_MACRO
+		.setEnabledLayerCount(validationLayers.size())
+		.setPpEnabledLayerNames(validationLayers.data())
+#else
+		.setEnabledLayerCount(0)
+#endif
+		.setEnabledExtensionCount(deviceExtensions.size())
+		.setPpEnabledExtensionNames(deviceExtensions.data());
 
 	deviceData.logicalDevice = deviceData.physicalDevice.createDevice(deviceCreateInfo);
-	if(deviceData.queueFamilyIndices.graphicsFamilyIndex != -1)
-	{
-		deviceData.graphicsQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.graphicsFamilyIndex, 0);
-	}
-
-	if(deviceData.queueFamilyIndices.presentFamilyIndex != -1)
-	{
-		deviceData.presentQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.presentFamilyIndex, 0);
-	}
+	deviceData.graphicsQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.graphicsFamilyIndex, 0);
+	deviceData.presentQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.presentFamilyIndex, 0);
 }
 
 void VkHandle::InitSwapChain()
 {
-	auto capabilities = deviceData.physicalDevice.getSurfaceCapabilitiesKHR(surface.get());
-	auto formats = deviceData.physicalDevice.getSurfaceFormatsKHR(surface.get());
-	auto presentModes = deviceData.physicalDevice.getSurfacePresentModesKHR(surface.get());
+	auto capabilities = deviceData.physicalDevice.getSurfaceCapabilitiesKHR(surface);
+	auto formats = deviceData.physicalDevice.getSurfaceFormatsKHR(surface);
+	auto presentModes = deviceData.physicalDevice.getSurfacePresentModesKHR(surface);
 
 	auto getSwapChainSurfaceFormt = [&](const std::vector<vk::SurfaceFormatKHR>& availableFormats)
 	{
@@ -167,7 +212,7 @@ void VkHandle::InitSwapChain()
 	Uint32 imageCount = (std::max)(capabilities.minImageCount, 2U);
 
 	auto createInfo = vk::SwapchainCreateInfoKHR()
-		.setSurface(surface.get())
+		.setSurface(surface)
 		.setPreTransform(capabilities.currentTransform)
 		.setImageFormat(surfaceFormat.format)
 		.setImageColorSpace(surfaceFormat.colorSpace)
@@ -202,10 +247,20 @@ void VkHandle::InitSwapChain()
 	{
 		swapImageViews.push_back(std::make_unique<ImageViewVk>(deviceData, imageDesc, swapImages[i]));
 	}
-
 }
 
-IGraphicsPipeline* VkHandle::CreateGrpahicsPipeline(const GraphicsPipelineDesc &gfxPipelineDesc)
+#ifdef DEBUG_VULKAN_MACRO
+VKAPI_ATTR VkBool32 VKAPI_CALL VkHandle::DebugMessageCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
+{
+    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+	return VK_FALSE;
+}
+#endif
+
+
+
+
+IGraphicsPipeline *VkHandle::CreateGrpahicsPipeline(const GraphicsPipelineDesc &gfxPipelineDesc)
 {
     return new GraphicsPipelineVk(deviceData, gfxPipelineDesc);
 }
@@ -452,7 +507,7 @@ void VkHandle::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint3
 {
 	pGfxPending->PrepareDraw();
 
-	numInstances = (std::max)(1U, numInstances);
+	numInstances = (std::max)((Uint32)1, numInstances);
 	Uint numVertices = 0;
 
 	currentCmd.draw(numVertices, numInstances, baseVertexIndex, 0);

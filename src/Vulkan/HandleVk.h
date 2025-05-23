@@ -5,16 +5,14 @@
 #include <memory>
 #include "PendingStateVk.h"
 
+class GLFWwindow;
+
 namespace TinyRHI
 {
     class VkHandle : public IRHIHandle
     {
     public:
-        VkHandle()
-		{
-			InitVulkan();
-			InitPendingState();
-		}
+        explicit VkHandle(GLFWwindow* _window);
         ~VkHandle()
 		{
 			deviceData.logicalDevice.destroy();
@@ -28,11 +26,20 @@ namespace TinyRHI
 		void InitSurface();
 		void InitDevice();
 		void InitSwapChain();
+		void RecreateSwapChain();
 		void InitPendingState()
 		{
 			pGfxPending = std::make_unique<GfxPendingStateVk>();
 			pComputePending = std::make_unique<ComputePendingStateVk>();
 		}
+
+#ifdef DEBUG_VULKAN_MACRO
+		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessageCallback(
+			VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+			VkDebugUtilsMessageTypeFlagsEXT messageType,
+			const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+			void* pUserData);
+#endif
 
 	public:
         // 
@@ -101,10 +108,18 @@ namespace TinyRHI
 
 
     private:
+		GLFWwindow* window;
+
 		vk::UniqueInstance instance;
+
+#ifdef DEBUG_VULKAN_MACRO
+		vk::DispatchLoaderDynamic loader;
+    	vk::UniqueHandle<vk::DebugUtilsMessengerEXT, vk::DispatchLoaderDynamic> debugUtilsMessenger;
+#endif
+
 		std::vector<vk::PhysicalDevice> physicalDevices;
 
-		vk::UniqueSurfaceKHR surface;
+    	VkSurfaceKHR surface;
 		vk::UniqueSwapchainKHR swapChain;
 		std::vector<std::unique_ptr<ImageViewVk>> swapImageViews;
 		Uint32 swapImageIndex;

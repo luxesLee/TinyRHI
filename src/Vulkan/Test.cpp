@@ -1,11 +1,12 @@
 #include "Test.h"
 #include "HandleVk.h"
+#include "GLFW/glfw3.h"
 
 namespace TinyRHI
 {
-    IRHIHandle *getHandle()
+    IRHIHandle *RHIFactory::getHandle(GLFWwindow *window)
     {
-        return new VkHandle();
+        return new VkHandle(window);
     }
 
 } // namespace TinyRHI

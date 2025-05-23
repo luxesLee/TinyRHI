@@ -1,10 +1,14 @@
 #pragma once
-
 #include "IRHIHandle.h"
 
-namespace TinyRHI
-{
-    
-    IRHIHandle* getHandle();
+struct GLFWwindow;
 
+namespace TinyRHI
+{    
+    class RHIFactory
+    {
+    public:
+        static IRHIHandle* getHandle(GLFWwindow* window);
+    };
+    
 } // namespace TinyRHI

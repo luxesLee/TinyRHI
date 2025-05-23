@@ -1,24 +1,31 @@
-#define USE_VULKAN 1
+#include <iostream>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-#include <iostream>
 #include "Test.h"
 
 int main()
 {
-    TinyRHI::IRHIHandle* pHandle = TinyRHI::getHandle();
-
+    glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(1024, 1024, "Test_Mini_Example", nullptr, nullptr);
+    TinyRHI::IRHIHandle* pHandle = TinyRHI::RHIFactory::getHandle(window);
 
     
 
+
     // while(!glfwWindowShouldClose(window))
     {
+        // pHandle->BeginFrame();
+        //     pHandle->BeginCommand();
+        //         pHandle->BeginRenderPass();
 
+        //         pHandle->EndRenderPass();
+        //     pHandle->EndCommand();
 
+        //     pHandle->Commit();
+        // pHandle->EndFrame();
 
     }
 
