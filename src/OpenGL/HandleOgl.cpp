@@ -17,57 +17,58 @@ void TinyRHI::HandleOgl::InitOpenGL()
     }
 }
 
-IShader* HandleOgl::CreateVertexShader(ShaderDesc &shaderDesc)
+IShader* HandleOgl::CreateVertexShader(const ShaderDesc &shaderDesc)
 {
     return new ShaderOgl<IShader::Stage::Vertex>(shaderDesc);
 }
 
-IShader* HandleOgl::CreatePixelShader(ShaderDesc &shaderDesc)
+IShader* HandleOgl::CreatePixelShader(const ShaderDesc &shaderDesc)
 {
     return new ShaderOgl<IShader::Stage::Pixel>(shaderDesc);
 }
 
-IShader* HandleOgl::CreateComputeShader(ShaderDesc &shaderDesc)
+IShader* HandleOgl::CreateComputeShader(const ShaderDesc &shaderDesc)
 {
     return new ShaderOgl<IShader::Stage::Compute>(shaderDesc);
 }
 
-void TinyRHI::HandleOgl::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances)
+IRHIHandle* TinyRHI::HandleOgl::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances)
 {
-    
+    return this;
 }
 
-void TinyRHI::HandleOgl::DrawPrimitiveIndirect(IBuffer *argumentBuffer, Uint32 argumentOffset)
+IRHIHandle* TinyRHI::HandleOgl::DrawPrimitiveIndirect(IBuffer *argumentBuffer, Uint32 argumentOffset)
 {
-
+    return this;
 }
 
-void TinyRHI::HandleOgl::DrawIndexPrimitive(IBuffer *indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances)
+IRHIHandle* TinyRHI::HandleOgl::DrawIndexPrimitive(IBuffer *indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances)
 {
-
+    return this;
 }
 
-void HandleOgl::Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ)
+IRHIHandle* HandleOgl::Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ)
 {
     glDispatchCompute(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
+    return this;
 }
 
-void HandleOgl::SetSamplerTexture(ITexture *texture, Uint setId, Uint bindingId)
+IRHIHandle* HandleOgl::SetSamplerTexture(ITexture *texture, Uint setId, Uint bindingId)
 {
-    
+    return this;
 }
 
-void HandleOgl::SetStorageTexture(ITexture *texture, Uint setId, Uint bindingId)
+IRHIHandle* HandleOgl::SetStorageTexture(ITexture *texture, Uint setId, Uint bindingId)
 {
-
+    return this;
 }
 
-void HandleOgl::SetStorageBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
+IRHIHandle* HandleOgl::SetStorageBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
 {
-
+    return this;
 }
 
-void HandleOgl::SetUniformBuffer(IBuffer *Buffer, Uint setId, Uint bindingId)
+IRHIHandle* HandleOgl::SetUniformBuffer(IBuffer *Buffer, Uint setId, Uint bindingId)
 {
-
+    return this;
 }

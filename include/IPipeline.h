@@ -48,7 +48,7 @@ namespace TinyRHI
 			PointList, LineList, LineStrip, TriangleList, TriangleStrip, TriangleFan,
 			LineListAdjacency, LineStripAdjacency, TriangleListAdjacency, TriangleStripAdjacency,
 			PatchList
-		} topology;
+		} topology = PrimitiveTopology::TriangleList;
 		bool bPrimitiveRestart = false;
 	};
 

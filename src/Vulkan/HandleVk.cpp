@@ -76,11 +76,11 @@ void VkHandle::InitInstanceAndPhysicalDevice()
 
 	{
 		physicalDevices = instance->enumeratePhysicalDevices();
-		std::cout << "Found " << physicalDevices.size() << " physical device(s)\n";
+		// std::cout << "Found " << physicalDevices.size() << " physical device(s)\n";
 		for (const auto& pDevice : physicalDevices)
 		{
 			vk::PhysicalDeviceProperties deviceProperties = pDevice.getProperties();
-			std::cout << "  Physical device found: " << deviceProperties.deviceName;
+			// std::cout << "  Physical device found: " << deviceProperties.deviceName;
 			vk::PhysicalDeviceFeatures deviceFeatures = pDevice.getFeatures();
 
 			if (deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
@@ -260,6 +260,10 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkHandle::DebugMessageCallback(VkDebugUtilsMessag
 
 
 
+
+
+
+
 IGraphicsPipeline *VkHandle::CreateGrpahicsPipeline(const GraphicsPipelineDesc &gfxPipelineDesc)
 {
     return new GraphicsPipelineVk(deviceData, gfxPipelineDesc);
@@ -270,17 +274,17 @@ IComputePipeline* VkHandle::CreateComputePipeline(const ComputePipelineDesc &com
     return new ComputePipelineVk(deviceData, computePipelineDesc);
 }
 
-IShader *VkHandle::CreateVertexShader(ShaderDesc &shaderDesc)
+IShader *VkHandle::CreateVertexShader(const ShaderDesc &shaderDesc)
 {
 	return new ShaderVk<IShader::Stage::Vertex>(deviceData, shaderDesc);
 }
 
-IShader* VkHandle::CreatePixelShader(ShaderDesc &shaderDesc)
+IShader* VkHandle::CreatePixelShader(const ShaderDesc &shaderDesc)
 {
     return new ShaderVk<IShader::Stage::Pixel>(deviceData, shaderDesc);
 }
 
-IShader* VkHandle::CreateComputeShader(ShaderDesc &shaderDesc)
+IShader* VkHandle::CreateComputeShader(const ShaderDesc &shaderDesc)
 {
     return new ShaderVk<IShader::Stage::Compute>(deviceData, shaderDesc);
 }
@@ -328,12 +332,20 @@ Uint32 VkHandle::GetUsedVRAM() const
     return 0;
 }
 
-void VkHandle::BeginFrame()
+
+
+
+
+
+
+
+IRHIHandle* VkHandle::BeginFrame()
 {
 	swapImageIndex = deviceData.logicalDevice.acquireNextImageKHR(swapChain.get(), UINT64_MAX, {}, {}).value;
+	return this;
 }
 
-void VkHandle::EndFrame()
+IRHIHandle* VkHandle::EndFrame()
 {
 	vk::PresentInfoKHR presentInfo = vk::PresentInfoKHR()
 		.setSwapchainCount(1)
@@ -345,22 +357,25 @@ void VkHandle::EndFrame()
 	
 	auto result = deviceData.presentQueue.presentKHR(presentInfo);
 	assert(result == vk::Result::eSuccess);
+	return this;
 }
 
-void VkHandle::BeginCommand()
+IRHIHandle* VkHandle::BeginCommand()
 {
 	currentCmd = cmdPoolManager->GetCmdBuffer();
 	currentCmd.begin(vk::CommandBufferBeginInfo());
+	return this;
 }
 
-void VkHandle::EndCommand()
+IRHIHandle* VkHandle::EndCommand()
 {
 	currentCmd.end();
 	
 	currentCmd = VK_NULL_HANDLE;
+	return this;
 }
 
-void VkHandle::BeginRenderPass()
+IRHIHandle* VkHandle::BeginRenderPass()
 {
 	assert(currentCmd != vk::CommandBuffer());
 	vk::RenderPassBeginInfo renderPassBeginInfo = vk::RenderPassBeginInfo()
@@ -371,20 +386,23 @@ void VkHandle::BeginRenderPass()
 		// .setClearValues()
 		;
 	currentCmd.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+	return this;
 }
 
-void VkHandle::EndRenderPass()
+IRHIHandle* VkHandle::EndRenderPass()
 {
 	currentCmd.endRenderPass();
+	return this;
 }
 
-void VkHandle::Commit()
+IRHIHandle* VkHandle::Commit()
 {
 	// cmdPoolManager->SubmitCmdBuffer();
 	std::cout << "1 2 3" << std::endl;
+	return this;
 }
 
-void VkHandle::SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline)
+IRHIHandle* VkHandle::SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline)
 {
 	GraphicsPipelineVk* vkGfxPipeline = dynamic_cast<GraphicsPipelineVk*>(gfxPipeline);
 	if(vkGfxPipeline)
@@ -397,9 +415,10 @@ void VkHandle::SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline)
 			pGfxPending->MarkUpdateDynamicStates();
 		}
 	}
+	return this;
 }
 
-void VkHandle::SetComputePipelineState(IComputePipeline *computePipeline)
+IRHIHandle* VkHandle::SetComputePipelineState(IComputePipeline *computePipeline)
 {
 	ComputePipelineVk* vkComputePipeline = dynamic_cast<ComputePipelineVk*>(computePipeline);
 	if(vkComputePipeline)
@@ -411,35 +430,39 @@ void VkHandle::SetComputePipelineState(IComputePipeline *computePipeline)
 			pComputePending->SetCmdBuffer(currentCmd);
 		}
 	}
+	return this;
 }
 
-void VkHandle::SetVertexStream(Uint32 vertId, IBuffer *buffer, Uint32 offset)
+IRHIHandle* VkHandle::SetVertexStream(Uint32 vertId, IBuffer *buffer, Uint32 offset)
 {
 	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
 	if(vkBuffer)
 	{
 		pGfxPending->SetVertex(vertId, vkBuffer->BufferHandle(), offset);
 	}
+	return this;
 }
 
-void VkHandle::SetViewport(Extent3D minExt, Extent3D maxExt)
+IRHIHandle* VkHandle::SetViewport(Extent3D minExt, Extent3D maxExt)
 {
 	vk::Viewport viewport;
 	viewport.setMinDepth(minExt.depth).setMaxDepth(maxExt.depth);
 	viewport.setX(minExt.width).setY(minExt.height);
 	viewport.setWidth(maxExt.width - minExt.width).setHeight(maxExt.height - minExt.height);
 	pGfxPending->SetViewport(viewport);
+	return this;
 }
 
-void VkHandle::SetScissor(Extent2D minExt, Extent2D maxExt)
+IRHIHandle* VkHandle::SetScissor(Extent2D minExt, Extent2D maxExt)
 {
 	vk::Rect2D rect2D;
 	rect2D.setOffset(vk::Offset2D(minExt.width, minExt.height));
 	rect2D.setExtent(vk::Extent2D(maxExt.width - minExt.width, maxExt.height - minExt.height));
 	pGfxPending->SetScissor(rect2D);
+	return this;
 }
 
-void VkHandle::SetSamplerTexture(ITexture *texture, Uint setId, Uint bindingId)
+IRHIHandle* VkHandle::SetSamplerTexture(ITexture *texture, Uint setId, Uint bindingId)
 {
 	TextureVk* vkTexture = dynamic_cast<TextureVk*>(texture);
 	if(vkTexture)
@@ -453,9 +476,10 @@ void VkHandle::SetSamplerTexture(ITexture *texture, Uint setId, Uint bindingId)
 			pComputePending->SetSamplerImage(vkTexture, setId, bindingId);
 		}
 	}
+	return this;
 }
 
-void VkHandle::SetStorageTexture(ITexture *texture, Uint setId, Uint bindingId)
+IRHIHandle* VkHandle::SetStorageTexture(ITexture *texture, Uint setId, Uint bindingId)
 {
 	TextureVk* vkTexture = dynamic_cast<TextureVk*>(texture);
 	if(vkTexture)
@@ -469,9 +493,10 @@ void VkHandle::SetStorageTexture(ITexture *texture, Uint setId, Uint bindingId)
 			pComputePending->SetStorageImage(vkTexture, setId, bindingId);
 		}
 	}
+	return this;
 }
 
-void VkHandle::SetStorageBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
+IRHIHandle* VkHandle::SetStorageBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
 {
 	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
 	if(vkBuffer)
@@ -485,9 +510,10 @@ void VkHandle::SetStorageBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
 			pComputePending->SetStorageBuffer(vkBuffer, setId, bindingId);
 		}
 	}
+	return this;
 }
 
-void VkHandle::SetUniformBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
+IRHIHandle* VkHandle::SetUniformBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
 {
 	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
 	if(vkBuffer)
@@ -501,9 +527,10 @@ void VkHandle::SetUniformBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
 			pComputePending->SetUniformBuffer(vkBuffer, setId, bindingId);
 		}
 	}
+	return this;
 }
 
-void VkHandle::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances)
+IRHIHandle* VkHandle::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances)
 {
 	pGfxPending->PrepareDraw();
 
@@ -511,9 +538,10 @@ void VkHandle::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint3
 	Uint numVertices = 0;
 
 	currentCmd.draw(numVertices, numInstances, baseVertexIndex, 0);
+	return this;
 }
 
-void VkHandle::DrawPrimitiveIndirect(IBuffer *argumentBuffer, Uint32 argumentOffset)
+IRHIHandle* VkHandle::DrawPrimitiveIndirect(IBuffer *argumentBuffer, Uint32 argumentOffset)
 {
 	pGfxPending->PrepareDraw();
 	BufferVk* vkArgumentBuffer = dynamic_cast<BufferVk*>(argumentBuffer);
@@ -521,9 +549,10 @@ void VkHandle::DrawPrimitiveIndirect(IBuffer *argumentBuffer, Uint32 argumentOff
 	{
 		currentCmd.drawIndirect(vkArgumentBuffer->BufferHandle(), 0, 1, sizeof(vk::DrawIndirectCommand));
 	}
+	return this;
 }
 
-void VkHandle::DrawIndexPrimitive(IBuffer *indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances)
+IRHIHandle* VkHandle::DrawIndexPrimitive(IBuffer *indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances)
 {
 	pGfxPending->PrepareDraw();
 	BufferVk* vkIndexBuffer = dynamic_cast<BufferVk*>(indexBuffer);
@@ -533,33 +562,37 @@ void VkHandle::DrawIndexPrimitive(IBuffer *indexBuffer, Int32 baseVertexIndex, U
 		Uint32 numIndices = 0;
 		currentCmd.drawIndexed(numIndices, numInstances, startIndex, baseVertexIndex, firstInstance);
 	}
+	return this;
 }
 
-void VkHandle::Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ)
+IRHIHandle* VkHandle::Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ)
 {
 	pComputePending->PrepareDispatch();
 	currentCmd.dispatch(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
+	return this;
 }
 
-void VkHandle::UpdateBuffer(IBuffer *buffer, void *data, Uint32 dataSize, Uint32 offset)
+IRHIHandle* VkHandle::UpdateBuffer(IBuffer *buffer, void *data, Uint32 dataSize, Uint32 offset)
 {
 	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
 	if(vkBuffer)
 	{
 		vkBuffer->UpdateBufferData(data, dataSize, offset);
 	}
+	return this;
 }
 
-void VkHandle::UpdateImageView(IImageView *imageView, void *data, Uint32 dataSize)
+IRHIHandle* VkHandle::UpdateImageView(IImageView *imageView, void *data, Uint32 dataSize)
 {
 	ImageViewVk* vkImageView = dynamic_cast<ImageViewVk*>(imageView);
 	if(vkImageView)
 	{
 		vkImageView->SetImageData(data, dataSize);
 	}
+	return this;
 }
 
-void VkHandle::CopyBuffer(IBuffer *srcBuffer, IBuffer *dstBuffer)
+IRHIHandle* VkHandle::CopyBuffer(IBuffer *srcBuffer, IBuffer *dstBuffer)
 {
 	BufferVk* vkSrcBuffer = dynamic_cast<BufferVk*>(srcBuffer);
 	BufferVk* vkDstBuffer = dynamic_cast<BufferVk*>(dstBuffer);
@@ -573,9 +606,10 @@ void VkHandle::CopyBuffer(IBuffer *srcBuffer, IBuffer *dstBuffer)
         cmdBuffer.copyBuffer(vkSrcBuffer->BufferHandle(), vkDstBuffer->BufferHandle(), region);
         EndSingleTimeCommands(deviceData, cmdBuffer);
 	}
+	return this;
 }
 
-void VkHandle::CopyBufferToImage(IBuffer *srcBuffer, IImageView *dstImageView)
+IRHIHandle* VkHandle::CopyBufferToImage(IBuffer *srcBuffer, IImageView *dstImageView)
 {
 	BufferVk* vkSrcBuffer = dynamic_cast<BufferVk*>(srcBuffer);
 	ImageViewVk* vkDstImageView = dynamic_cast<ImageViewVk*>(dstImageView);
@@ -597,9 +631,10 @@ void VkHandle::CopyBufferToImage(IBuffer *srcBuffer, IImageView *dstImageView)
 
         TransitionImageLayout(deviceData, vkDstImageView->ImageHandle(), imageDesc, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
+	return this;
 }
 
-void VkHandle::CopyImageToBuffer(IImageView *srcImageView, IBuffer *dstBuffer)
+IRHIHandle* VkHandle::CopyImageToBuffer(IImageView *srcImageView, IBuffer *dstBuffer)
 {
 	ImageViewVk* vkSrcImageView = dynamic_cast<ImageViewVk*>(srcImageView);
 	BufferVk* vkDstBuffer = dynamic_cast<BufferVk*>(dstBuffer);
@@ -621,9 +656,10 @@ void VkHandle::CopyImageToBuffer(IImageView *srcImageView, IBuffer *dstBuffer)
 
         TransitionImageLayout(deviceData, vkSrcImageView->ImageHandle(), imageDesc, vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
+	return this;
 }
 
-void VkHandle::CopyImageToImage(IImageView *srcImageView, IImageView *dstImageView)
+IRHIHandle* VkHandle::CopyImageToImage(IImageView *srcImageView, IImageView *dstImageView)
 {
 	ImageViewVk* vkSrcImageView = dynamic_cast<ImageViewVk*>(srcImageView);
 	ImageViewVk* vkDstImageView = dynamic_cast<ImageViewVk*>(dstImageView);
@@ -654,4 +690,5 @@ void VkHandle::CopyImageToImage(IImageView *srcImageView, IImageView *dstImageVi
         TransitionImageLayout(deviceData, vkSrcImageView->ImageHandle(), srcImageDesc, vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 		TransitionImageLayout(deviceData, vkDstImageView->ImageHandle(), dstImageDesc, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
+	return this;
 }

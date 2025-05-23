@@ -4,6 +4,8 @@ project(TinyRHI VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(TEST_EXAMPLE ON)
+
 if(MSVC)
     set(CMAKE_C_FLAGS /source-charset:utf-8)
 endif()
@@ -51,16 +53,9 @@ set_target_properties(TinyRHI PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 # Test
-include(CTest)
-enable_testing()
-
-add_executable(my_test1 test/test_min_example.cpp)
-target_link_libraries(my_test1 PRIVATE TinyRHI)
-
-set(GLFW_BUILD_DOCS OFF)
-set(GLFW_BUILD_TESTS OFF)
-set(GLFW_BUILD_EXAMPLES OFF)
-add_subdirectory(third_party/glfw)
-target_link_libraries(my_test1 PUBLIC glfw)
-
-add_test(NAME TinyRHITest COMMAND my_test1)
+if(TEST_EXAMPLE)
+    add_subdirectory(third_party/glfw)
+    include(CTest)
+    enable_testing()
+    add_subdirectory(test)
+endif()

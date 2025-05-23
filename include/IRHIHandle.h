@@ -21,9 +21,9 @@ namespace TinyRHI
 		virtual IGraphicsPipeline* CreateGrpahicsPipeline(const GraphicsPipelineDesc& gfxPipelineDesc) = 0;
 		virtual IComputePipeline* CreateComputePipeline(const ComputePipelineDesc& computePipelineDesc) = 0;
 
-		virtual IShader* CreateVertexShader(ShaderDesc& shaderDesc) = 0;
-		virtual IShader* CreatePixelShader(ShaderDesc& shaderDesc) = 0;
-		virtual IShader* CreateComputeShader(ShaderDesc& shaderDesc) = 0;
+		virtual IShader* CreateVertexShader(const ShaderDesc& shaderDesc) = 0;
+		virtual IShader* CreatePixelShader(const ShaderDesc& shaderDesc) = 0;
+		virtual IShader* CreateComputeShader(const ShaderDesc& shaderDesc) = 0;
 
 		virtual IBuffer* CreateBuffer(const BufferDesc& bufferDesc) = 0;
 		virtual IBuffer* CreateBufferWithData(const BufferDesc& bufferDesc, void* data, Uint32 dataSize) = 0;
@@ -36,43 +36,43 @@ namespace TinyRHI
         // Cmd
         // ------------------------------------------------------------------------------------------------
 
-		virtual void BeginFrame() = 0;
-		virtual void EndFrame() = 0;
+		virtual IRHIHandle* BeginFrame() = 0;
+		virtual IRHIHandle* EndFrame() = 0;
 
-		virtual void BeginCommand() = 0;
-		virtual void EndCommand() = 0;
+		virtual IRHIHandle* BeginCommand() = 0;
+		virtual IRHIHandle* EndCommand() = 0;
 
-		virtual void BeginRenderPass() = 0;
-		virtual void EndRenderPass() = 0;
+		virtual IRHIHandle* BeginRenderPass() = 0;
+		virtual IRHIHandle* EndRenderPass() = 0;
 
-		virtual void Commit() = 0;
+		virtual IRHIHandle* Commit() = 0;
 
-		virtual void SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline) = 0;
-		virtual void SetComputePipelineState(IComputePipeline* computePipeline) = 0;
+		virtual IRHIHandle* SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline) = 0;
+		virtual IRHIHandle* SetComputePipelineState(IComputePipeline* computePipeline) = 0;
 
-		virtual void SetVertexStream(Uint32 vertId, IBuffer* buffer, Uint32 offset) = 0;
-		virtual void SetViewport(Extent3D minExt, Extent3D maxExt) = 0;
-		virtual void SetScissor(Extent2D minExt, Extent2D maxExt) = 0;
+		virtual IRHIHandle* SetVertexStream(Uint32 vertId, IBuffer* buffer, Uint32 offset) = 0;
+		virtual IRHIHandle* SetViewport(Extent3D minExt, Extent3D maxExt) = 0;
+		virtual IRHIHandle* SetScissor(Extent2D minExt, Extent2D maxExt) = 0;
 
 		
 		// virtual void SetAttachment() = 0;
 
-		virtual void SetSamplerTexture(ITexture* texture, Uint setId, Uint bindingId) = 0;
-		virtual void SetStorageTexture(ITexture* texture, Uint setId, Uint bindingId) = 0;
-		virtual void SetStorageBuffer(IBuffer* buffer, Uint setId, Uint bindingId) = 0;
-		virtual void SetUniformBuffer(IBuffer* Buffer, Uint setId, Uint bindingId) = 0;
+		virtual IRHIHandle* SetSamplerTexture(ITexture* texture, Uint setId, Uint bindingId) = 0;
+		virtual IRHIHandle* SetStorageTexture(ITexture* texture, Uint setId, Uint bindingId) = 0;
+		virtual IRHIHandle* SetStorageBuffer(IBuffer* buffer, Uint setId, Uint bindingId) = 0;
+		virtual IRHIHandle* SetUniformBuffer(IBuffer* Buffer, Uint setId, Uint bindingId) = 0;
 
-		virtual void DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances) = 0;
-		virtual void DrawPrimitiveIndirect(IBuffer* argumentBuffer, Uint32 argumentOffset) = 0;
-		virtual void DrawIndexPrimitive(IBuffer* indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances) = 0;
-		virtual void Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ) = 0;
+		virtual IRHIHandle* DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances) = 0;
+		virtual IRHIHandle* DrawPrimitiveIndirect(IBuffer* argumentBuffer, Uint32 argumentOffset) = 0;
+		virtual IRHIHandle* DrawIndexPrimitive(IBuffer* indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances) = 0;
+		virtual IRHIHandle* Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ) = 0;
 
-		virtual void UpdateBuffer(IBuffer* buffer, void* data, Uint32 dataSize, Uint32 offset) = 0;
-		virtual void UpdateImageView(IImageView* imageView, void* data, Uint32 dataSize) = 0;
-		virtual void CopyBuffer(IBuffer* srcBuffer, IBuffer* dstBuffer) = 0;
-		virtual void CopyBufferToImage(IBuffer* srcBuffer, IImageView* dstImageView) = 0;
-		virtual void CopyImageToBuffer(IImageView* srcImageView, IBuffer* dstBuffer) = 0;
-		virtual void CopyImageToImage(IImageView* srcImageView, IImageView* dstImageView) = 0;
+		virtual IRHIHandle* UpdateBuffer(IBuffer* buffer, void* data, Uint32 dataSize, Uint32 offset) = 0;
+		virtual IRHIHandle* UpdateImageView(IImageView* imageView, void* data, Uint32 dataSize) = 0;
+		virtual IRHIHandle* CopyBuffer(IBuffer* srcBuffer, IBuffer* dstBuffer) = 0;
+		virtual IRHIHandle* CopyBufferToImage(IBuffer* srcBuffer, IImageView* dstImageView) = 0;
+		virtual IRHIHandle* CopyImageToBuffer(IImageView* srcImageView, IBuffer* dstBuffer) = 0;
+		virtual IRHIHandle* CopyImageToImage(IImageView* srcImageView, IImageView* dstImageView) = 0;
 
     };
 }
