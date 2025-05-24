@@ -389,6 +389,8 @@ namespace TinyRHI
 			return vk::Format::eR8G8B8Unorm;
 		case Format::RGBA8_UNORM:
 			return vk::Format::eR8G8B8A8Unorm;
+		case Format::BGRA8_SRGB:
+			return vk::Format::eB8G8R8A8Srgb;
 		case Format::RGBA32_FLOAT:
 			return vk::Format::eR32G32B32A32Sfloat;
 		case Format::D32_FLOAT:

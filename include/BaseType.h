@@ -36,8 +36,9 @@ enum class MSAASamples { e1, e2, e4, e8, e16 };
 
 struct ClearValues
 {
-	struct { Float color[4]; } color;
-	struct { Float depth; Uint32 stencil; } depthStencil;
+	Float color[4];
+	Float depth; 
+	Uint32 stencil;
 };
 
 enum class Format
@@ -48,6 +49,7 @@ enum class Format
 	R32_FLOAT,
 	RGB8_UNORM,
 	RGBA8_UNORM,
+	BGRA8_SRGB,
 	RGBA32_FLOAT,
 	D32_FLOAT,
 	D24_UNORM_S8_UINT,

@@ -9,35 +9,43 @@ namespace TinyRHI
 	{
 	public:
 		FramebufferVk(
-			const DeviceData& deviceData, 
-			const FramebufferDesc& framebufferDesc)
+			const DeviceData& _deviceData, 
+			const FramebufferDesc& _framebufferDesc)
+			: framebufferDesc(_framebufferDesc)
 		{
-			RenderPassVk* renderPass = dynamic_cast<RenderPassVk*>(framebufferDesc.renderPass);
+			renderPass = dynamic_cast<RenderPassVk*>(framebufferDesc.renderPass);
 
 			std::vector<vk::ImageView> vkImageViews;
 			for (auto imageView : framebufferDesc.imageViews)
 			{
 				ImageViewVk* vkImageView = dynamic_cast<ImageViewVk*>(imageView);
-				vkImageViews.push_back(vkImageView->Handle());
+				vkImageViews.push_back(vkImageView->ImageViewHandle());
 			}
 
 			auto framebufferInfo = vk::FramebufferCreateInfo()
 				.setAttachmentCount(vkImageViews.size())
 				.setPAttachments(vkImageViews.data())
-				.setRenderPass(renderPass->Handle())
+				.setRenderPass(renderPass->RenderPassHandle())
 				.setWidth(framebufferDesc.framebufferExt.width)
 				.setHeight(framebufferDesc.framebufferExt.height)
 				.setLayers(1);
 
-			framebuffer = deviceData.logicalDevice.createFramebufferUnique(framebufferInfo);
+			framebuffer = _deviceData.logicalDevice.createFramebufferUnique(framebufferInfo);
 		}
 
-		auto& Handle()
+		auto& FramebufferHandle()
 		{
 			return framebuffer.get();
 		}
 
+		auto& RenderPassHandle()
+		{
+			return renderPass;
+		}
+
 	private:
 		vk::UniqueFramebuffer framebuffer;
+		const FramebufferDesc& framebufferDesc;
+		RenderPassVk* renderPass;
 	};
 }

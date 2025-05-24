@@ -29,6 +29,7 @@ namespace TinyRHI
 
 				attachmentDescs.push_back(attachmentDesc);
 			}
+			needDepth = false;
 
 			auto subpass = vk::SubpassDescription()
 				.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
@@ -55,6 +56,7 @@ namespace TinyRHI
 				attachmentDescs.push_back(attachmentDesc);
 
 				subpass.setPDepthStencilAttachment(&depthAttachmentRef);
+				needDepth = true;
 			}
 
 			auto renderPassInfo = vk::RenderPassCreateInfo()
@@ -68,12 +70,18 @@ namespace TinyRHI
 			renderPass = logicalDevice.createRenderPassUnique(renderPassInfo);
 		}
 
-		vk::RenderPass Handle()
+		vk::RenderPass RenderPassHandle()
 		{
 			return renderPass.get();
 		}
 
+		Bool HasDepth() const
+		{
+			return needDepth;
+		}
+
 	private:
 		vk::UniqueRenderPass renderPass;
+		Bool needDepth;
 	};
 }

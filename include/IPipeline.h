@@ -73,18 +73,23 @@ namespace TinyRHI
 		CompOp depthTestComp = CompOp::Never;
 	};
 
-	struct GraphicsPipelineDesc
+	struct GfxSetting
 	{
-		IShader* vertShader;
-		IShader* pixelShader;
 		VertexDeclaration vertexDecl;
 		InputAssemblyState inputAssemlyState;
 		RasterizeState rasterizeState;
 		MSAASamples samples = MSAASamples::e1;
 		DepthState depthState;
 		std::vector<BlendSetting> blendSettings;
+	};
+
+	struct GraphicsPipelineDesc
+	{
+		IShader* vertShader;
+		IShader* pixelShader;
 		IPipelineLayout* pipelineLayout;
 		IRenderPass* renderPass;
+		GfxSetting setting;
 	};
 
 	struct ComputePipelineDesc

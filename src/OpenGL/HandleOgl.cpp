@@ -32,7 +32,7 @@ IShader* HandleOgl::CreateComputeShader(const ShaderDesc &shaderDesc)
     return new ShaderOgl<IShader::Stage::Compute>(shaderDesc);
 }
 
-IRHIHandle* TinyRHI::HandleOgl::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances)
+IRHIHandle* TinyRHI::HandleOgl::DrawPrimitive(Uint32 vertexCount, Uint32 firstVertex)
 {
     return this;
 }

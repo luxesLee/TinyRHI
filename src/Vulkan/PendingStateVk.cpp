@@ -28,7 +28,7 @@ void GfxPendingStateVk::PrepareDraw()
     if(bVertDirty)
     {
         bVertDirty = false;
-        const VertexDeclaration& vertexDecl = currentPipeline->PipelineDescHandle().vertexDecl;
+        const VertexDeclaration& vertexDecl = currentPipeline->PipelineDescHandle().setting.vertexDecl;
         if(vertexDecl.attributeDescs.size() == 0)
         {
             return;
@@ -62,7 +62,7 @@ void GfxPendingStateVk::PrepareDraw()
 
         if(TemporaryIA.NumUsed > 0)
         {
-            currentCmdBuffer.bindVertexBuffers(0, TemporaryIA.VertexBuffers, TemporaryIA.VertexOffsets);
+            currentCmdBuffer.bindVertexBuffers(0, TemporaryIA.NumUsed, TemporaryIA.VertexBuffers, TemporaryIA.VertexOffsets);
         }
     }
 }

@@ -41,6 +41,20 @@ int main()
     GLFWwindow* window = glfwCreateWindow(1024, 1024, "Test_Mini_Example", nullptr, nullptr);
     TinyRHI::IRHIHandle* pHandle = TinyRHI::RHIFactory::getHandle(window);
 
+    TinyRHI::ImageDesc imageDesc
+    {
+        .format = Format::BGRA8_SRGB
+    };
+    TinyRHI::ITexture* texture = pHandle->CreateTextureWithoutSampling(imageDesc);
+    TinyRHI::AttachmentDesc attachmentDesc
+    {
+        .format = Format::BGRA8_SRGB,
+        .loadOp = TinyRHI::AttachmentDesc::LoadOp::Clear,
+        .clearValue = 
+        {
+            .color = {0, 0, 0, 1}
+        }
+    };
 
     TinyRHI::IBuffer* pVeretx = pHandle->CreateBufferWithData(
         TinyRHI::BufferDesc
@@ -54,76 +68,78 @@ int main()
             .bStaging = true,
         }, vertex.data(), sizeof(Float) * vertex.size());
 
-
     auto vertShaderCode = readFile("shader/spirv/test_min_example_vert.spv");
+    auto vertShader = pHandle->CreateVertexShader(TinyRHI::ShaderDesc
+    {
+        .codeData = vertShaderCode.data(),
+        .codeSize = (Uint32)vertShaderCode.size(),
+    });
+
     auto pixelShaderCode = readFile("shader/spirv/test_min_example_frag.spv");
-    TinyRHI::IGraphicsPipeline* pGfxPipeline = pHandle->CreateGrpahicsPipeline(
-        TinyRHI::GraphicsPipelineDesc
+    auto pixelShader = pHandle->CreatePixelShader(TinyRHI::ShaderDesc
+    {
+        .codeData = pixelShaderCode.data(),
+        .codeSize = (Uint32)pixelShaderCode.size(),
+    });
+
+    auto gfxSetting = TinyRHI::GfxSetting
+    {
+        .vertexDecl
         {
-            .vertShader = pHandle->CreateVertexShader(
-                TinyRHI::ShaderDesc
-                {
-                    .codeData = vertShaderCode.data(),
-                    .codeSize = (Uint32)vertShaderCode.size(),
-                }
-                ),
-            .pixelShader = pHandle->CreatePixelShader(
-                TinyRHI::ShaderDesc
-                {
-                    .codeData = pixelShaderCode.data(),
-                    .codeSize = (Uint32)pixelShaderCode.size(),
-                }
-                ),
-            .vertexDecl
+            .vertexBindings
             {
-                .vertexBindings
                 {
-                    {
-                        .binding = 0,
-                        .stride = sizeof(Float) * 5,
-                        .bInstance = false,
-                    },
-                },
-                .attributeDescs
-                {
-                    TinyRHI::VertexDeclaration::VertexAttributeDesc
-                    {
-                        .location = 0,
-                        .binding = 0,
-                        .offset = 0,
-                        .format = TinyRHI::AttribType::Vec2,
-                    },
-                    TinyRHI::VertexDeclaration::VertexAttributeDesc
-                    {
-                        .location = 1,
-                        .binding = 0,
-                        .offset = 2 * sizeof(Float),
-                        .format = TinyRHI::AttribType::Vec3,
-                    },
+                    .binding = 0,
+                    .stride = sizeof(Float) * 5,
+                    .bInstance = false,
                 },
             },
-            .blendSettings
+            .attributeDescs
             {
-                TinyRHI::BlendSetting::Opaque,
+                TinyRHI::VertexDeclaration::VertexAttributeDesc
+                {
+                    .location = 0,
+                    .binding = 0,
+                    .offset = 0,
+                    .format = TinyRHI::AttribType::Vec2,
+                },
+                TinyRHI::VertexDeclaration::VertexAttributeDesc
+                {
+                    .location = 1,
+                    .binding = 0,
+                    .offset = 2 * sizeof(Float),
+                    .format = TinyRHI::AttribType::Vec3,
+                },
             },
-            .pipelineLayout = nullptr,
-            .renderPass = nullptr,
-        }
-    );
+        },
+        .blendSettings
+        {
+            TinyRHI::BlendSetting::Opaque,
+        },
+    };
 
     // while(!glfwWindowShouldClose(window))
     {
         pHandle->
-        BeginFrame()->
-            BeginCommand()->
-                BeginRenderPass()->
-                    SetGraphicsPipelineState(pGfxPipeline)->
-                    SetVertexStream(0, pVeretx, 0)->
-                    DrawPrimitive(0, 0, 0)->
-                EndRenderPass()->
-            EndCommand()
-            ->Commit()->
-        EndFrame();
+            BeginFrame()->
+                BeginCommand()->
+                    SetColorAttachments(texture, attachmentDesc)->
+                //     SetDepthAttachment()->
+                    BeginRenderPass()->
+                        SetVertexShader(vertShader)->
+                        SetPixelShader(pixelShader)->
+                //         // PipelineLayout can be built with DescriptorSetLayouts
+                //         // SetxxxxBuffer()->
+                //         // SetxxxxTexture()->
+                //         SetGraphicsPipeline(gfxSetting)->
+                        SetViewport(Extent3D(0, 0, 0), Extent3D(1024, 1024, 0))->
+                        SetScissor(Extent2D(0, 0), Extent2D(1024, 1024))->
+                        SetVertexStream(0, pVeretx, 0)->
+                //         DrawPrimitive(3, 0)->
+                    EndRenderPass()->
+                EndCommand()->
+                Commit()->
+            EndFrame();
     }
 
     glfwDestroyWindow(window);

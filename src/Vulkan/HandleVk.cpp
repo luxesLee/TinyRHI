@@ -25,7 +25,7 @@ void VkHandle::InitVulkan()
 	InitInstanceAndPhysicalDevice();
 	InitSurface();
 	InitDevice();
-	// InitSwapChain();
+	InitSwapChain();
 	cmdPoolManager = std::make_unique<CommandPoolManager>(deviceData);
 	deviceData.commandPool = cmdPoolManager->CmdPoolHandle();
 }
@@ -208,7 +208,7 @@ void VkHandle::InitSwapChain()
 
 	auto surfaceFormat = getSwapChainSurfaceFormt(formats);
 	auto presentMode = getSwapPresentMode(presentModes, vk::PresentModeKHR::eMailbox);
-	auto extent = getSwapExtent(capabilities);
+	swapChainExtent = getSwapExtent(capabilities);
 	Uint32 imageCount = (std::max)(capabilities.minImageCount, 2U);
 
 	auto createInfo = vk::SwapchainCreateInfoKHR()
@@ -217,13 +217,12 @@ void VkHandle::InitSwapChain()
 		.setImageFormat(surfaceFormat.format)
 		.setImageColorSpace(surfaceFormat.colorSpace)
 		.setPresentMode(presentMode)
-		.setImageExtent(extent)
+		.setImageExtent(swapChainExtent)
 		.setImageArrayLayers(1)
 		.setMinImageCount(imageCount)
 		.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
 		.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
 		.setClipped(true)
-		.setOldSwapchain(nullptr)
 		;
 	
 	uint32_t familyIndices[] = { deviceData.queueFamilyIndices.graphicsFamilyIndex, deviceData.queueFamilyIndices.presentFamilyIndex };
@@ -241,9 +240,14 @@ void VkHandle::InitSwapChain()
 	swapChain = deviceData.logicalDevice.createSwapchainKHRUnique(createInfo);
 
 	std::vector<vk::Image> swapImages = deviceData.logicalDevice.getSwapchainImagesKHR(swapChain.get());
+	assert(swapImages.size() > 0);
+
 	swapImageViews.clear();
-	ImageDesc imageDesc;
-	for(Uint i = 0; i < imageCount; i++)
+	ImageDesc imageDesc
+	{
+		.format = Format::BGRA8_SRGB,
+	};
+	for(Uint i = 0; i < swapImages.size(); i++)
 	{
 		swapImageViews.push_back(std::make_unique<ImageViewVk>(deviceData, imageDesc, swapImages[i]));
 	}
@@ -264,15 +268,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkHandle::DebugMessageCallback(VkDebugUtilsMessag
 
 
 
-IGraphicsPipeline *VkHandle::CreateGrpahicsPipeline(const GraphicsPipelineDesc &gfxPipelineDesc)
-{
-    return new GraphicsPipelineVk(deviceData, gfxPipelineDesc);
-}
 
-IComputePipeline* VkHandle::CreateComputePipeline(const ComputePipelineDesc &computePipelineDesc)
-{
-    return new ComputePipelineVk(deviceData, computePipelineDesc);
-}
 
 IShader *VkHandle::CreateVertexShader(const ShaderDesc &shaderDesc)
 {
@@ -304,6 +300,11 @@ IBuffer* VkHandle::CreateBufferWithData(const BufferDesc &bufferDesc, void *data
 ITexture* VkHandle::CreateTexture(const ImageDesc& imageDesc, const SamplerState& samplerState)
 {
     return new TextureVk(deviceData, imageDesc, samplerState);
+}
+
+ITexture *VkHandle::CreateTextureWithoutSampling(const ImageDesc &imageDesc)
+{
+    return new TextureVk(deviceData, imageDesc);
 }
 
 ITexture* VkHandle::CreateTextureWithData(const ImageDesc& imageDesc, const SamplerState& samplerState, void* data, Uint32 dataSize)
@@ -341,7 +342,8 @@ Uint32 VkHandle::GetUsedVRAM() const
 
 IRHIHandle* VkHandle::BeginFrame()
 {
-	swapImageIndex = deviceData.logicalDevice.acquireNextImageKHR(swapChain.get(), UINT64_MAX, {}, {}).value;
+	vk::ResultValue result = deviceData.logicalDevice.acquireNextImageKHR(swapChain.get(), UINT64_MAX, nullptr, nullptr);
+	swapImageIndex = result.value;
 	return this;
 }
 
@@ -357,12 +359,15 @@ IRHIHandle* VkHandle::EndFrame()
 	
 	auto result = deviceData.presentQueue.presentKHR(presentInfo);
 	assert(result == vk::Result::eSuccess);
+	swapImageIndex = -1;
 	return this;
 }
 
 IRHIHandle* VkHandle::BeginCommand()
 {
+	// todo: Multi-threaded command
 	currentCmd = cmdPoolManager->GetCmdBuffer();
+	currentCmd.reset();
 	currentCmd.begin(vk::CommandBufferBeginInfo());
 	return this;
 }
@@ -370,41 +375,32 @@ IRHIHandle* VkHandle::BeginCommand()
 IRHIHandle* VkHandle::EndCommand()
 {
 	currentCmd.end();
-	
 	currentCmd = VK_NULL_HANDLE;
-	return this;
-}
-
-IRHIHandle* VkHandle::BeginRenderPass()
-{
-	assert(currentCmd != vk::CommandBuffer());
-	vk::RenderPassBeginInfo renderPassBeginInfo = vk::RenderPassBeginInfo()
-		// .setRenderPass()
-		// .setFramebuffer()
-		// .setRenderArea()
-		// .setClearValueCount()
-		// .setClearValues()
-		;
-	currentCmd.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
-	return this;
-}
-
-IRHIHandle* VkHandle::EndRenderPass()
-{
-	currentCmd.endRenderPass();
 	return this;
 }
 
 IRHIHandle* VkHandle::Commit()
 {
-	// cmdPoolManager->SubmitCmdBuffer();
-	std::cout << "1 2 3" << std::endl;
+	cmdPoolManager->SubmitCmdBuffer(std::nullopt);
 	return this;
 }
 
-IRHIHandle* VkHandle::SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline)
+IRHIHandle* VkHandle::BeginRenderPass()
 {
-	GraphicsPipelineVk* vkGfxPipeline = dynamic_cast<GraphicsPipelineVk*>(gfxPipeline);
+	pRenderPassBeginManager->BeginRenderPass(currentCmd);
+	return this;
+}
+
+IRHIHandle* VkHandle::EndRenderPass()
+{
+	pRenderPassBeginManager->EndRenderPass(currentCmd);
+	return this;
+}
+
+IRHIHandle* VkHandle::SetGraphicsPipeline(const GfxSetting& gfxSetting)
+{
+	PipelineLayoutVk* pipelineLayout = nullptr;
+	GraphicsPipelineVk* vkGfxPipeline = pRenderPassBeginManager->GetGfxPipeline(gfxSetting, pipelineLayout);
 	if(vkGfxPipeline)
 	{
 		if(pGfxPending->SetPipeline(vkGfxPipeline))
@@ -418,22 +414,66 @@ IRHIHandle* VkHandle::SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline)
 	return this;
 }
 
-IRHIHandle* VkHandle::SetComputePipelineState(IComputePipeline *computePipeline)
+IRHIHandle* VkHandle::SetComputePipeline()
 {
-	ComputePipelineVk* vkComputePipeline = dynamic_cast<ComputePipelineVk*>(computePipeline);
+	PipelineLayoutVk* pipelineLayout = nullptr;
+	ComputePipelineVk* vkComputePipeline = pRenderPassBeginManager->GetComputePipeline(pipelineLayout);
 	if(vkComputePipeline)
 	{
 		if(pComputePending->SetPipeline(vkComputePipeline))
 		{
 			bCurrentGfx = false;
-			vkComputePipeline->Bind(currentCmd);
+			pComputePending->Bind();
 			pComputePending->SetCmdBuffer(currentCmd);
 		}
 	}
 	return this;
 }
 
-IRHIHandle* VkHandle::SetVertexStream(Uint32 vertId, IBuffer *buffer, Uint32 offset)
+IRHIHandle* VkHandle::SetColorAttachments(ITexture *texture, const AttachmentDesc& attachmentDesc)
+{
+	TextureVk* vkTexture = dynamic_cast<TextureVk*>(texture);
+	if(vkTexture)
+	{
+		std::shared_ptr<AttachmentVk> colorAttach = std::make_shared<AttachmentVk>(vkTexture->ImageViewPtr(), attachmentDesc, false);
+		pRenderPassBeginManager->SetColorAttachments(colorAttach);
+	}
+    return this;
+}
+
+IRHIHandle* VkHandle::SetDepthAttachment(ITexture *texture, const AttachmentDesc& attachmentDesc)
+{
+	TextureVk* vkTexture = dynamic_cast<TextureVk*>(texture);
+	if(vkTexture)
+	{
+		std::shared_ptr<AttachmentVk> depthAttach = std::make_shared<AttachmentVk>(vkTexture->ImageViewPtr(), attachmentDesc, true);
+		pRenderPassBeginManager->SetDepthAttachment(depthAttach);
+	}
+    return this;
+}
+
+IRHIHandle* VkHandle::SetVertexShader(IShader *shader)
+{
+	assert(shader);
+	pRenderPassBeginManager->SetShader<IShader::Stage::Vertex>(shader);
+    return this;
+}
+
+IRHIHandle* VkHandle::SetPixelShader(IShader *shader)
+{
+	assert(shader);
+	pRenderPassBeginManager->SetShader<IShader::Stage::Pixel>(shader);
+    return this;
+}
+
+IRHIHandle* VkHandle::SetComputeShader(IShader *shader)
+{
+	assert(shader);
+	pRenderPassBeginManager->SetShader<IShader::Stage::Compute>(shader);
+    return this;
+}
+
+IRHIHandle *VkHandle::SetVertexStream(Uint32 vertId, IBuffer *buffer, Uint32 offset)
 {
 	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
 	if(vkBuffer)
@@ -530,14 +570,14 @@ IRHIHandle* VkHandle::SetUniformBuffer(IBuffer *buffer, Uint setId, Uint binding
 	return this;
 }
 
-IRHIHandle* VkHandle::DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances)
+IRHIHandle* VkHandle::DrawPrimitive(Uint32 vertexCount, Uint32 firstVertex)
 {
 	pGfxPending->PrepareDraw();
-
-	numInstances = (std::max)((Uint32)1, numInstances);
-	Uint numVertices = 0;
-
-	currentCmd.draw(numVertices, numInstances, baseVertexIndex, 0);
+	// #1: vert count per instance
+	// #2: instance count
+	// #3: ignore first #3 num vertices
+	// #4: same #3 but instance
+	currentCmd.draw(vertexCount, 1, firstVertex, 0);
 	return this;
 }
 

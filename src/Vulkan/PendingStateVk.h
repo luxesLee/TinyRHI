@@ -213,6 +213,11 @@ namespace TinyRHI
             return false;
         }
 
+        void Bind()
+        {
+            currentPipeline->Bind(currentCmdBuffer);
+        }
+
         void PrepareDispatch();
 
     private:

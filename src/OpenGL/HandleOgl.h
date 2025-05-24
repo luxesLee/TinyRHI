@@ -25,8 +25,6 @@ namespace TinyRHI
 
         // 
         // ------------------------------------------------------------------------------------------------
-        virtual IGraphicsPipeline* CreateGrpahicsPipeline(const GraphicsPipelineDesc& gfxPipelineDesc);
-		virtual IComputePipeline* CreateComputePipeline(const ComputePipelineDesc& computePipelineDesc);
 
 		virtual IShader* CreateVertexShader(const ShaderDesc& shaderDesc);
 		virtual IShader* CreatePixelShader(const ShaderDesc& shaderDesc);
@@ -47,8 +45,8 @@ namespace TinyRHI
 		virtual IRHIHandle* BeginRenderPass() = 0;
 		virtual IRHIHandle* EndRenderPass() = 0;
 
-		virtual IRHIHandle* SetGraphicsPipelineState() = 0;
-		virtual IRHIHandle* SetComputePipelineState() = 0;
+		virtual IRHIHandle* SetGraphicsPipeline(const GfxSetting& gfxSetting) = 0;
+		virtual IRHIHandle* SetComputePipeline() = 0;
 
 		virtual IRHIHandle* SetVertexStream() = 0;
 		virtual IRHIHandle* SetViewport(Extent3D minExt, Extent3D maxExt) = 0;
@@ -59,7 +57,7 @@ namespace TinyRHI
 		virtual IRHIHandle* SetStorageBuffer(IBuffer* buffer, Uint setId, Uint bindingId);
 		virtual IRHIHandle* SetUniformBuffer(IBuffer* Buffer, Uint setId, Uint bindingId);
 
-        virtual IRHIHandle* DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances);
+        virtual IRHIHandle* DrawPrimitive(Uint32 vertexCount, Uint32 firstVertex);
 		virtual IRHIHandle* DrawPrimitiveIndirect(IBuffer* argumentBuffer, Uint32 argumentOffset);
 		virtual IRHIHandle* DrawIndexPrimitive(IBuffer* indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances);
 		virtual IRHIHandle* Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ);

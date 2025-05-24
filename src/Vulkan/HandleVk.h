@@ -4,6 +4,7 @@
 #include "CommandPoolVk.h"
 #include <memory>
 #include "PendingStateVk.h"
+#include "RenderResourceVkManager.h"
 
 class GLFWwindow;
 
@@ -31,6 +32,7 @@ namespace TinyRHI
 		{
 			pGfxPending = std::make_unique<GfxPendingStateVk>();
 			pComputePending = std::make_unique<ComputePendingStateVk>();
+			pRenderPassBeginManager = std::make_unique<RenderResourceVkManager>(deviceData);
 		}
 
 #ifdef DEBUG_VULKAN_MACRO
@@ -45,15 +47,13 @@ namespace TinyRHI
         // 
         // ------------------------------------------------------------------------------------------------
 		
-        virtual IGraphicsPipeline* CreateGrpahicsPipeline(const GraphicsPipelineDesc& gfxPipelineDesc);
-		virtual IComputePipeline* CreateComputePipeline(const ComputePipelineDesc& computePipelineDesc);
-
 		virtual IShader* CreateVertexShader(const ShaderDesc& shaderDesc);
 		virtual IShader* CreatePixelShader(const ShaderDesc& shaderDesc);
 		virtual IShader* CreateComputeShader(const ShaderDesc& shaderDesc);
 
 		virtual IBuffer* CreateBuffer(const BufferDesc& bufferDesc);
 		virtual IBuffer* CreateBufferWithData(const BufferDesc& bufferDesc, void* data, Uint32 dataSize);
+		virtual ITexture* CreateTextureWithoutSampling(const ImageDesc& imageDesc);
 		virtual ITexture* CreateTexture(const ImageDesc& imageDesc, const SamplerState& samplerState);
 		virtual ITexture* CreateTextureWithData(const ImageDesc& imageDesc, const SamplerState& samplerState, void* data, Uint32 dataSize);
 
@@ -68,14 +68,20 @@ namespace TinyRHI
 
 		virtual IRHIHandle* BeginCommand();
 		virtual IRHIHandle* EndCommand();
+		virtual IRHIHandle* Commit();
 
 		virtual IRHIHandle* BeginRenderPass();
 		virtual IRHIHandle* EndRenderPass();
 
-		virtual IRHIHandle* Commit();
+		virtual IRHIHandle* SetGraphicsPipeline(const GfxSetting& gfxSetting);
+		virtual IRHIHandle* SetComputePipeline();
 
-		virtual IRHIHandle* SetGraphicsPipelineState(IGraphicsPipeline* gfxPipeline);
-		virtual IRHIHandle* SetComputePipelineState(IComputePipeline* computePipeline);
+		virtual IRHIHandle* SetColorAttachments(ITexture* texture, const AttachmentDesc& attachmentDesc);
+		virtual IRHIHandle* SetDepthAttachment(ITexture* texture, const AttachmentDesc& attachmentDesc);
+
+		virtual IRHIHandle* SetVertexShader(IShader* shader);
+		virtual IRHIHandle* SetPixelShader(IShader* shader);
+		virtual IRHIHandle* SetComputeShader(IShader* shader);
 
 		virtual IRHIHandle* SetVertexStream(Uint32 vertId, IBuffer* buffer, Uint32 offset);
 		virtual IRHIHandle* SetViewport(Extent3D minExt, Extent3D maxExt);
@@ -86,7 +92,7 @@ namespace TinyRHI
 		virtual IRHIHandle* SetStorageBuffer(IBuffer* buffer, Uint setId, Uint bindingId);
 		virtual IRHIHandle* SetUniformBuffer(IBuffer* Buffer, Uint setId, Uint bindingId);
 
-        virtual IRHIHandle* DrawPrimitive(Uint32 baseVertexIndex, Uint32 numPrimitives, Uint32 numInstances);
+        virtual IRHIHandle* DrawPrimitive(Uint32 vertexCount, Uint32 firstVertex);
 		virtual IRHIHandle* DrawPrimitiveIndirect(IBuffer* argumentBuffer, Uint32 argumentOffset);
 		virtual IRHIHandle* DrawIndexPrimitive(IBuffer* indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances);
 		virtual IRHIHandle* Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ);
@@ -114,6 +120,7 @@ namespace TinyRHI
 
     	VkSurfaceKHR surface;
 		vk::UniqueSwapchainKHR swapChain;
+		vk::Extent2D swapChainExtent;
 		std::vector<std::unique_ptr<ImageViewVk>> swapImageViews;
 		Uint32 swapImageIndex;
 
@@ -126,6 +133,8 @@ namespace TinyRHI
 		Bool bCurrentGfx;
 		std::unique_ptr<GfxPendingStateVk> pGfxPending;
 		std::unique_ptr<ComputePendingStateVk> pComputePending;
+
+		std::unique_ptr<RenderResourceVkManager> pRenderPassBeginManager;
     };
 
 

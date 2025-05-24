@@ -16,10 +16,10 @@ namespace TinyRHI
                 .setQueueFamilyIndex(deviceData.queueFamilyIndices.graphicsFamilyIndex);
             commandPool = deviceData.logicalDevice.createCommandPoolUnique(commandPoolCreateInfo);
 
-            // auto allocInfo = vk::CommandBufferAllocateInfo()
-            //     .setCommandPool(commandPool.get())
-            //     .setCommandBufferCount();
-            // deviceData.logicalDevice.allocateCommandBuffersUnique(allocInfo);
+            auto allocInfo = vk::CommandBufferAllocateInfo()
+                .setCommandPool(commandPool.get())
+                .setCommandBufferCount(1);
+            cmdBufferTmp = std::move(deviceData.logicalDevice.allocateCommandBuffersUnique(allocInfo)[0]);
         }
 
         void SubmitCmdBuffer(
@@ -29,8 +29,8 @@ namespace TinyRHI
             const std::optional<vk::Fence> fence)
         {
             vk::SubmitInfo submitInfo = vk::SubmitInfo()
-                .setCommandBufferCount(activeBuffers.size())
-                .setPCommandBuffers(activeBuffers.data())
+                .setCommandBufferCount(1)
+                .setPCommandBuffers(&(cmdBufferTmp.get()))
                 // .setWaitSemaphoreCount(waitSemaphores.size())
                 // .setPWaitSemaphores(waitSemaphores.data())
                 // .setSignalSemaphoreCount(signalSemaphores.size())
@@ -45,12 +45,11 @@ namespace TinyRHI
             deviceData.graphicsQueue.submit(submitInfo, fence.has_value() ? fence.value() : VK_NULL_HANDLE);
 
             // activeBuffers
-
         }
 
         vk::CommandBuffer GetCmdBuffer()
         {
-            return vk::CommandBuffer();
+            return cmdBufferTmp.get();
         }
 
         auto& CmdPoolHandle()
@@ -63,6 +62,7 @@ namespace TinyRHI
         vk::UniqueCommandPool commandPool;
         std::vector<vk::UniqueCommandBuffer> cmdBuffers;
         std::vector<vk::CommandBuffer> activeBuffers;
+        vk::UniqueCommandBuffer cmdBufferTmp;
     };
 
 } // namespace TinyRHI

@@ -17,18 +17,18 @@ GraphicsPipelineVk::GraphicsPipelineVk(
 
     std::vector<vk::VertexInputBindingDescription> vertexBindings;
     std::vector<vk::VertexInputAttributeDescription> attributeDescs;
-    for (Int i = 0; i < graphicsPipelineDesc.vertexDecl.vertexBindings.size(); i++)
+    for (Int i = 0; i < graphicsPipelineDesc.setting.vertexDecl.vertexBindings.size(); i++)
     {
-        auto& binding = graphicsPipelineDesc.vertexDecl.vertexBindings[i];
+        auto& binding = graphicsPipelineDesc.setting.vertexDecl.vertexBindings[i];
         vertexBindings.push_back(
             vk::VertexInputBindingDescription()
             .setBinding(binding.binding)	// ÿ���󶨵����һ��VkBuffer
             .setStride(binding.stride)	// ÿ�����������ڻ��������ֽ�
             .setInputRate(binding.bInstance ? vk::VertexInputRate::eInstance : vk::VertexInputRate::eVertex));
     }
-    for (Int i = 0; i < graphicsPipelineDesc.vertexDecl.attributeDescs.size(); i++)
+    for (Int i = 0; i < graphicsPipelineDesc.setting.vertexDecl.attributeDescs.size(); i++)
     {
-        auto& attribDesc = graphicsPipelineDesc.vertexDecl.attributeDescs[i];
+        auto& attribDesc = graphicsPipelineDesc.setting.vertexDecl.attributeDescs[i];
         attributeDescs.push_back(
             vk::VertexInputAttributeDescription()
             .setBinding(attribDesc.binding)	// ��VertexInputBindingDescription��Ӧ
@@ -44,27 +44,27 @@ GraphicsPipelineVk::GraphicsPipelineVk(
         .setPVertexAttributeDescriptions(attributeDescs.data());
 
     auto inputAssemblyCreateInfo = vk::PipelineInputAssemblyStateCreateInfo()
-        .setTopology(ConvertPrimitiveTopology(graphicsPipelineDesc.inputAssemlyState.topology))
-        .setPrimitiveRestartEnable(graphicsPipelineDesc.inputAssemlyState.bPrimitiveRestart);
+        .setTopology(ConvertPrimitiveTopology(graphicsPipelineDesc.setting.inputAssemlyState.topology))
+        .setPrimitiveRestartEnable(graphicsPipelineDesc.setting.inputAssemlyState.bPrimitiveRestart);
 
     auto rasterizer = vk::PipelineRasterizationStateCreateInfo()
-        .setDepthClampEnable(graphicsPipelineDesc.rasterizeState.depthClamp)
-        .setPolygonMode(ConvertPolygonMode(graphicsPipelineDesc.rasterizeState.polygonMode))
-        .setLineWidth(graphicsPipelineDesc.rasterizeState.lineWidth)
-        .setCullMode(ConvertCullMode(graphicsPipelineDesc.rasterizeState.cullMode))
-        .setFrontFace(ConvertFrontFace(graphicsPipelineDesc.rasterizeState.frontFace))
-        .setDepthBiasEnable(graphicsPipelineDesc.rasterizeState.depthBias);
+        .setDepthClampEnable(graphicsPipelineDesc.setting.rasterizeState.depthClamp)
+        .setPolygonMode(ConvertPolygonMode(graphicsPipelineDesc.setting.rasterizeState.polygonMode))
+        .setLineWidth(graphicsPipelineDesc.setting.rasterizeState.lineWidth)
+        .setCullMode(ConvertCullMode(graphicsPipelineDesc.setting.rasterizeState.cullMode))
+        .setFrontFace(ConvertFrontFace(graphicsPipelineDesc.setting.rasterizeState.frontFace))
+        .setDepthBiasEnable(graphicsPipelineDesc.setting.rasterizeState.depthBias);
 
     auto viewport = vk::PipelineViewportStateCreateInfo()
         .setScissorCount(1)
         .setViewportCount(1);
 
     auto multisampling = vk::PipelineMultisampleStateCreateInfo()
-        .setSampleShadingEnable(graphicsPipelineDesc.samples != MSAASamples::e1)
-        .setRasterizationSamples(ConvertMSAASamples(graphicsPipelineDesc.samples));
+        .setSampleShadingEnable(graphicsPipelineDesc.setting.samples != MSAASamples::e1)
+        .setRasterizationSamples(ConvertMSAASamples(graphicsPipelineDesc.setting.samples));
 
     std::vector<vk::PipelineColorBlendAttachmentState> colorBlendAttachmentStates;
-    for (const auto& blendSetting : graphicsPipelineDesc.blendSettings)
+    for (const auto& blendSetting : graphicsPipelineDesc.setting.blendSettings)
     {
         colorBlendAttachmentStates.push_back(ConvertBlendState(blendSetting));
     }
@@ -75,10 +75,10 @@ GraphicsPipelineVk::GraphicsPipelineVk(
         .setPAttachments(colorBlendAttachmentStates.data());
 
     auto depthStencil = vk::PipelineDepthStencilStateCreateInfo()
-        .setStencilTestEnable(graphicsPipelineDesc.depthState.stencilTest)
-        .setDepthTestEnable(graphicsPipelineDesc.depthState.depthTest)
-        .setDepthCompareOp(ConvertCompOp(graphicsPipelineDesc.depthState.depthTestComp))
-        .setDepthWriteEnable(graphicsPipelineDesc.depthState.depthWrite)
+        .setStencilTestEnable(graphicsPipelineDesc.setting.depthState.stencilTest)
+        .setDepthTestEnable(graphicsPipelineDesc.setting.depthState.depthTest)
+        .setDepthCompareOp(ConvertCompOp(graphicsPipelineDesc.setting.depthState.depthTestComp))
+        .setDepthWriteEnable(graphicsPipelineDesc.setting.depthState.depthWrite)
         .setDepthBoundsTestEnable(false);
 
     vk::DynamicState dynamicStates[] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
@@ -98,7 +98,7 @@ GraphicsPipelineVk::GraphicsPipelineVk(
         .setPColorBlendState(&colorBlending)
         .setPDynamicState(&dynamicStateInfo)
         .setLayout(pipelineLayout)
-        .setRenderPass(vkRenderPass->Handle())
+        .setRenderPass(vkRenderPass->RenderPassHandle())
         .setSubpass(0)
         .setBasePipelineHandle(nullptr)
         .setBasePipelineIndex(-1);
