@@ -17,7 +17,7 @@ namespace TinyRHI
         {
             for(Uint i = 0; i < MaxDescriptorSetCount; i++)
             {
-                // dsWriter;
+                writerDirty[i] = false;
             }
         }
 
@@ -44,6 +44,8 @@ namespace TinyRHI
         {
             return SetBuffer<true>(vkBuffer, setId, bindingId);
         }
+
+        PipelineLayoutVk* GetPipelineLayout(const DeviceData& deviceData);
 
     protected:
         template<Bool bWriteEnable>
@@ -77,6 +79,8 @@ namespace TinyRHI
         vk::DescriptorSet* dsArray[MaxDescriptorSetCount];
         Uint dsNum;
         std::unique_ptr<DescriptorSetPoolVk> dsPool;
+
+        std::unordered_map<Uint32, std::unique_ptr<PipelineLayoutVk>> pipelineLayoutCache;
     };
 
     class GfxPendingStateVk : public PendingStateVk
@@ -108,7 +112,8 @@ namespace TinyRHI
             if(currentPipeline != newPipeline)
             {
                 currentPipeline = newPipeline;
-                PipelineLayoutVk* vkPipelineLayout = dynamic_cast<PipelineLayoutVk*>(currentPipeline->PipelineDescHandle().pipelineLayout);
+                auto& pipelineDesc = currentPipeline->PipelineDescHandle();
+                PipelineLayoutVk* vkPipelineLayout = dynamic_cast<PipelineLayoutVk*>(pipelineDesc.pipelineLayout);
                 if(vkPipelineLayout)
                 {
                     auto& dsVkArray = vkPipelineLayout->DSLayoutHandle();

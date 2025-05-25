@@ -13,6 +13,12 @@ namespace TinyRHI
 			const DeviceData& _deviceData,
 			const ImageDesc& _imageDesc);
 
+		// For swapChainImageView
+		ImageVk(
+			const DeviceData& _deviceData,
+			vk::Image _image, 
+			const ImageDesc& _imageDesc);
+
 		void SetImageData(void* data, Uint32 dataSize);
 
 		virtual Uint32 GetSize() const
@@ -46,6 +52,7 @@ namespace TinyRHI
 			const DeviceData& deviceData,
 			const ImageDesc& imageDesc);
 
+		// For swapChainImageView
 		ImageViewVk(
 			const DeviceData& deviceData,
 			const ImageDesc& imageDesc,

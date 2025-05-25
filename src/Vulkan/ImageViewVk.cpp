@@ -8,6 +8,7 @@ ImageVk::ImageVk(
     : deviceData(_deviceData), imageDesc(_imageDesc)
 {
     this->size = imageDesc.size3[0] * imageDesc.size3[1] * imageDesc.size3[2];
+    auto usage = ConvertImageUsage(imageDesc.usage);
 
     auto imageInfo = vk::ImageCreateInfo()
         .setImageType(ConvertImageType(imageDesc.imageType))
@@ -17,8 +18,8 @@ ImageVk::ImageVk(
         .setFormat(ConvertFormat(imageDesc.format))
         .setInitialLayout(vk::ImageLayout::eUndefined)
         .setUsage(imageDesc.bStaging ? 
-            vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eSampled: 
-            vk::ImageUsageFlagBits::eSampled)
+            vk::ImageUsageFlagBits::eTransferSrc | usage : 
+            usage)
         .setSharingMode(vk::SharingMode::eExclusive)
         .setSamples(ConvertMSAASamples(imageDesc.samples))
         .setFlags(vk::ImageCreateFlags());
@@ -37,7 +38,15 @@ ImageVk::ImageVk(
     deviceData.logicalDevice.bindImageMemory(image.get(), imageMemory.get(), 0);
 }
 
-void ImageVk::SetImageData(void* data, Uint32 dataSize)
+ImageVk::ImageVk(
+    const DeviceData& _deviceData, 
+    vk::Image _image, 
+    const ImageDesc &_imageDesc)
+    : deviceData(_deviceData), imageDesc(_imageDesc)
+{
+}
+
+void ImageVk::SetImageData(void *data, Uint32 dataSize)
 {
     if (!imageDesc.bStaging)
     {
@@ -106,6 +115,7 @@ ImageViewVk::ImageViewVk(
 }
 
 ImageViewVk::ImageViewVk(const DeviceData &deviceData, const ImageDesc &imageDesc, vk::Image image)
+    : imagePtr(std::make_unique<ImageVk>(deviceData, image, imageDesc))
 {
     vk::ImageViewType viewType = (imageDesc.imageType == ImageDesc::ImageType::e2D) ?
         vk::ImageViewType::e2D : vk::ImageViewType::e3D;

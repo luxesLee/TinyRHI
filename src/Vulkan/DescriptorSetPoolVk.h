@@ -59,7 +59,7 @@ namespace TinyRHI
 			hashKey = ComputeHash(layoutBindings);
 		}
 
-		DescriptorSetLayoutBindingDescArray& LayoutBinding()
+		auto& LayoutBinding()
 		{
 			return layoutBindings;
 		}
@@ -76,7 +76,7 @@ namespace TinyRHI
 
 	private:
 		vk::UniqueDescriptorSetLayout descriptorSetLayout;
-		DescriptorSetLayoutBindingDescArray layoutBindings;
+		const DescriptorSetLayoutBindingDescArray& layoutBindings;
 		Uint32 hashKey;
 	};
 
@@ -214,6 +214,13 @@ namespace TinyRHI
 					wdSet.setDstSet(vkDescriptorSet->DescriptorSetHandle());
 				}
 			}
+		}
+
+		DescriptorSetLayoutBindingDescArray GetDSLayoutBindingArray()
+		{
+			DescriptorSetLayoutBindingDescArray dsLayoutBindingArray;
+
+			return dsLayoutBindingArray;
 		}
 
 		Bool Update(vk::Device logicalDevice)

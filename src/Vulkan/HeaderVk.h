@@ -426,4 +426,26 @@ namespace TinyRHI
 		}
 		return vk::ImageType::e2D;
 	}
+
+	inline vk::ImageUsageFlags ConvertImageUsage(ImageUsage imageUsage)
+	{
+		vk::ImageUsageFlags usage;
+		if(imageUsage.colorAttach)
+		{
+			usage |= vk::ImageUsageFlagBits::eColorAttachment;
+		}
+		if(imageUsage.depthAttach)
+		{
+			usage |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+		}
+		if(imageUsage.Sample)
+		{
+			usage |= vk::ImageUsageFlagBits::eSampled;
+		}
+		if(imageUsage.Storage)
+		{
+			usage |= vk::ImageUsageFlagBits::eStorage;
+		}
+		return usage;
+	}
 }

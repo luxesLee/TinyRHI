@@ -28,6 +28,7 @@ namespace TinyRHI
 		void InitDevice();
 		void InitSwapChain();
 		void RecreateSwapChain();
+		void InitSync();
 		void InitPendingState()
 		{
 			pGfxPending = std::make_unique<GfxPendingStateVk>();
@@ -76,6 +77,7 @@ namespace TinyRHI
 		virtual IRHIHandle* SetGraphicsPipeline(const GfxSetting& gfxSetting);
 		virtual IRHIHandle* SetComputePipeline();
 
+		virtual IRHIHandle* SetDefaultAttachments(const AttachmentDesc &attachmentDesc);
 		virtual IRHIHandle* SetColorAttachments(ITexture* texture, const AttachmentDesc& attachmentDesc);
 		virtual IRHIHandle* SetDepthAttachment(ITexture* texture, const AttachmentDesc& attachmentDesc);
 
@@ -117,6 +119,7 @@ namespace TinyRHI
 #endif
 
 		std::vector<vk::PhysicalDevice> physicalDevices;
+		DeviceData deviceData;
 
     	VkSurfaceKHR surface;
 		vk::UniqueSwapchainKHR swapChain;
@@ -124,7 +127,10 @@ namespace TinyRHI
 		std::vector<std::unique_ptr<ImageViewVk>> swapImageViews;
 		Uint32 swapImageIndex;
 
-		DeviceData deviceData;
+		std::vector<vk::UniqueSemaphore> swapImageAvailableSemaphores;
+		std::vector<vk::UniqueSemaphore> renderFinishedSemaphores;
+		std::vector<vk::UniqueFence> inFlightFences;
+		Uint currentFrame;
 
 		std::unique_ptr<CommandPoolManager> cmdPoolManager;
 

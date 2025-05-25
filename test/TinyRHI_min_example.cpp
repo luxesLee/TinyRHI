@@ -41,11 +41,6 @@ int main()
     GLFWwindow* window = glfwCreateWindow(1024, 1024, "Test_Mini_Example", nullptr, nullptr);
     TinyRHI::IRHIHandle* pHandle = TinyRHI::RHIFactory::getHandle(window);
 
-    TinyRHI::ImageDesc imageDesc
-    {
-        .format = Format::BGRA8_SRGB
-    };
-    TinyRHI::ITexture* texture = pHandle->CreateTextureWithoutSampling(imageDesc);
     TinyRHI::AttachmentDesc attachmentDesc
     {
         .format = Format::BGRA8_SRGB,
@@ -118,12 +113,12 @@ int main()
         },
     };
 
-    // while(!glfwWindowShouldClose(window))
+     while(!glfwWindowShouldClose(window))
     {
         pHandle->
             BeginFrame()->
                 BeginCommand()->
-                    SetColorAttachments(texture, attachmentDesc)->
+                    SetDefaultAttachments(attachmentDesc)->
                 //     SetDepthAttachment()->
                     BeginRenderPass()->
                         SetVertexShader(vertShader)->
@@ -131,11 +126,11 @@ int main()
                 //         // PipelineLayout can be built with DescriptorSetLayouts
                 //         // SetxxxxBuffer()->
                 //         // SetxxxxTexture()->
-                //         SetGraphicsPipeline(gfxSetting)->
+                        SetGraphicsPipeline(gfxSetting)->
                         SetViewport(Extent3D(0, 0, 0), Extent3D(1024, 1024, 0))->
                         SetScissor(Extent2D(0, 0), Extent2D(1024, 1024))->
                         SetVertexStream(0, pVeretx, 0)->
-                //         DrawPrimitive(3, 0)->
+                        DrawPrimitive(3, 0)->
                     EndRenderPass()->
                 EndCommand()->
                 Commit()->

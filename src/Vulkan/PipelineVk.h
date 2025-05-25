@@ -12,12 +12,12 @@ namespace TinyRHI
 		PipelineLayoutVk(
 			const DeviceData& deviceData, 
 			std::vector<DescriptorSetLayoutVk>& _vkDescriptorSetLayouts)
-			: vkDescriptorSetLayouts(_vkDescriptorSetLayouts)
 		{
-			std::vector<vk::DescriptorSetLayout> descriptorSetLayouts(vkDescriptorSetLayouts.size());
-			for (Uint32 i = 0; i < vkDescriptorSetLayouts.size(); i++)
+			std::vector<vk::DescriptorSetLayout> descriptorSetLayouts(_vkDescriptorSetLayouts.size());
+			for (Uint32 i = 0; i < _vkDescriptorSetLayouts.size(); i++)
 			{
-				descriptorSetLayouts[i] = vkDescriptorSetLayouts[i].DSLayoutHandle();
+				vkDescriptorSetLayouts.push_back(std::move(_vkDescriptorSetLayouts[i]));
+				descriptorSetLayouts[i] = _vkDescriptorSetLayouts[i].DSLayoutHandle();
 			}
 
 			auto pipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo()
@@ -39,7 +39,7 @@ namespace TinyRHI
 
 	private:
 		vk::UniquePipelineLayout pipelineLayout;
-		std::vector<DescriptorSetLayoutVk>& vkDescriptorSetLayouts;
+		std::vector<DescriptorSetLayoutVk> vkDescriptorSetLayouts;
 	};
 
 	class GraphicsPipelineVk : public IGraphicsPipeline

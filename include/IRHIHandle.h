@@ -48,6 +48,7 @@ namespace TinyRHI
 		virtual IRHIHandle* SetGraphicsPipeline(const GfxSetting& gfxSetting) = 0;
 		virtual IRHIHandle* SetComputePipeline() = 0;
 
+		virtual IRHIHandle* SetDefaultAttachments(const AttachmentDesc &attachmentDesc) = 0;
 		virtual IRHIHandle* SetColorAttachments(ITexture* texture, const AttachmentDesc& attachmentDesc) = 0;
 		virtual IRHIHandle* SetDepthAttachment(ITexture* texture, const AttachmentDesc& attachmentDesc) = 0;
 

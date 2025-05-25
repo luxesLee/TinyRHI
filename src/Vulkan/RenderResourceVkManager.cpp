@@ -9,23 +9,20 @@ GraphicsPipelineVk* RenderResourceVkManager::GetGfxPipeline(const GfxSetting &se
     auto& gfxPipeline = gfxPipelineCache[hashId];
     if(!gfxPipeline)
     {
-        GraphicsPipelineDesc desc
+        GraphicsPipelineDesc desc = 
         {
             .vertShader = vertexShader,
             .pixelShader = pixelShader,
-            .pipelineLayout = pipelineLayout,
+            .pipelineLayout = dynamic_cast<IPipelineLayout*>(pipelineLayout),
             .renderPass = GetCurrentRenderPass(),
             .setting = setting,
         };
-        assert(desc.vertShader);
-        assert(desc.pixelShader);
-        assert(desc.renderPass);
         gfxPipeline = std::make_unique<GraphicsPipelineVk>(deviceData, desc);
     }
     return gfxPipeline.get();
 }
 
-ComputePipelineVk* RenderResourceVkManager::GetComputePipeline(PipelineLayoutVk *pipelineLayout)
+ComputePipelineVk *RenderResourceVkManager::GetComputePipeline(PipelineLayoutVk *pipelineLayout)
 {
     Uint hashId = pipelineHash();
     auto& computePipeline = computePipelineCache[hashId];
@@ -93,7 +90,7 @@ FramebufferVk* RenderResourceVkManager::GetCurrentFramebuffer()
     if(!framebuffer)
     {
         FramebufferDesc desc;
-        desc.framebufferExt;
+        desc.framebufferExt = Extent2D(1024, 1024);
         for(const auto& colorAttachment : colorAttachments)
         {
             if(colorAttachment)

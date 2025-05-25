@@ -24,8 +24,8 @@ namespace TinyRHI
 					.setStoreOp(vk::AttachmentStoreOp::eStore)
 					.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
 					.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-					.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
-					.setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal);
+					.setInitialLayout(vk::ImageLayout::eUndefined)
+					.setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
 
 				attachmentDescs.push_back(attachmentDesc);
 			}

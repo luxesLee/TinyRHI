@@ -26,6 +26,7 @@ void VkHandle::InitVulkan()
 	InitSurface();
 	InitDevice();
 	InitSwapChain();
+	InitSync();
 	cmdPoolManager = std::make_unique<CommandPoolManager>(deviceData);
 	deviceData.commandPool = cmdPoolManager->CmdPoolHandle();
 }
@@ -245,11 +246,31 @@ void VkHandle::InitSwapChain()
 	swapImageViews.clear();
 	ImageDesc imageDesc
 	{
+		.size3 = {swapChainExtent.width, swapChainExtent.height, 1},
 		.format = Format::BGRA8_SRGB,
+		.usage
+		{
+			.colorAttach = true,
+		}
 	};
 	for(Uint i = 0; i < swapImages.size(); i++)
 	{
 		swapImageViews.push_back(std::make_unique<ImageViewVk>(deviceData, imageDesc, swapImages[i]));
+	}
+}
+
+void VkHandle::InitSync()
+{
+	currentFrame = 0;
+	swapImageAvailableSemaphores.resize(2);
+	renderFinishedSemaphores.resize(2);
+	inFlightFences.resize(2);
+	auto fenceCreateInfo = vk::FenceCreateInfo().setFlags(vk::FenceCreateFlagBits::eSignaled);
+	for(Uint i = 0; i < 2; i++)
+	{
+		swapImageAvailableSemaphores[i] = deviceData.logicalDevice.createSemaphoreUnique(vk::SemaphoreCreateInfo());
+		renderFinishedSemaphores[i] = deviceData.logicalDevice.createSemaphoreUnique(vk::SemaphoreCreateInfo());
+		inFlightFences[i] = deviceData.logicalDevice.createFenceUnique(fenceCreateInfo);
 	}
 }
 
@@ -342,8 +363,13 @@ Uint32 VkHandle::GetUsedVRAM() const
 
 IRHIHandle* VkHandle::BeginFrame()
 {
-	vk::ResultValue result = deviceData.logicalDevice.acquireNextImageKHR(swapChain.get(), UINT64_MAX, nullptr, nullptr);
+	vk::Result waitFenceResult = deviceData.logicalDevice.waitForFences(inFlightFences[currentFrame].get(), true, UINT64_MAX);
+
+	vk::ResultValue result = deviceData.logicalDevice.acquireNextImageKHR(
+		swapChain.get(), UINT64_MAX, swapImageAvailableSemaphores[currentFrame].get(), nullptr);
 	swapImageIndex = result.value;
+
+	deviceData.logicalDevice.resetFences(inFlightFences[currentFrame].get());
 	return this;
 }
 
@@ -353,20 +379,21 @@ IRHIHandle* VkHandle::EndFrame()
 		.setSwapchainCount(1)
 		.setPSwapchains(&swapChain.get())
 		.setPImageIndices(&swapImageIndex)
-		// .setWaitSemaphoreCount()
-		// .setPWaitSemaphores()
+		.setWaitSemaphoreCount(1)
+		.setPWaitSemaphores(&renderFinishedSemaphores[currentFrame].get())
 		;
 	
 	auto result = deviceData.presentQueue.presentKHR(presentInfo);
 	assert(result == vk::Result::eSuccess);
 	swapImageIndex = -1;
+	//currentFrame = (currentFrame + 1) % 2;
 	return this;
 }
 
 IRHIHandle* VkHandle::BeginCommand()
 {
 	// todo: Multi-threaded command
-	currentCmd = cmdPoolManager->GetCmdBuffer();
+	currentCmd = cmdPoolManager->GetCmdBuffer(currentFrame);
 	currentCmd.reset();
 	currentCmd.begin(vk::CommandBufferBeginInfo());
 	return this;
@@ -381,7 +408,12 @@ IRHIHandle* VkHandle::EndCommand()
 
 IRHIHandle* VkHandle::Commit()
 {
-	cmdPoolManager->SubmitCmdBuffer(std::nullopt);
+	cmdPoolManager->SubmitCmdBuffer(
+		currentFrame,
+		{swapImageAvailableSemaphores[currentFrame].get()},
+		{renderFinishedSemaphores[currentFrame].get()},
+		vk::PipelineStageFlagBits::eColorAttachmentOutput,
+		inFlightFences[currentFrame].get());
 	return this;
 }
 
@@ -399,7 +431,7 @@ IRHIHandle* VkHandle::EndRenderPass()
 
 IRHIHandle* VkHandle::SetGraphicsPipeline(const GfxSetting& gfxSetting)
 {
-	PipelineLayoutVk* pipelineLayout = nullptr;
+	PipelineLayoutVk* pipelineLayout = pGfxPending->GetPipelineLayout(deviceData);
 	GraphicsPipelineVk* vkGfxPipeline = pRenderPassBeginManager->GetGfxPipeline(gfxSetting, pipelineLayout);
 	if(vkGfxPipeline)
 	{
@@ -416,7 +448,7 @@ IRHIHandle* VkHandle::SetGraphicsPipeline(const GfxSetting& gfxSetting)
 
 IRHIHandle* VkHandle::SetComputePipeline()
 {
-	PipelineLayoutVk* pipelineLayout = nullptr;
+	PipelineLayoutVk* pipelineLayout = pComputePending->GetPipelineLayout(deviceData);
 	ComputePipelineVk* vkComputePipeline = pRenderPassBeginManager->GetComputePipeline(pipelineLayout);
 	if(vkComputePipeline)
 	{
@@ -430,7 +462,14 @@ IRHIHandle* VkHandle::SetComputePipeline()
 	return this;
 }
 
-IRHIHandle* VkHandle::SetColorAttachments(ITexture *texture, const AttachmentDesc& attachmentDesc)
+IRHIHandle* VkHandle::SetDefaultAttachments(const AttachmentDesc &attachmentDesc)
+{
+	std::shared_ptr<AttachmentVk> colorAttach = std::make_shared<AttachmentVk>(swapImageViews[currentFrame].get(), attachmentDesc, false);
+	pRenderPassBeginManager->SetColorAttachments(colorAttach);
+    return this;
+}
+
+IRHIHandle *VkHandle::SetColorAttachments(ITexture *texture, const AttachmentDesc &attachmentDesc)
 {
 	TextureVk* vkTexture = dynamic_cast<TextureVk*>(texture);
 	if(vkTexture)
@@ -577,7 +616,7 @@ IRHIHandle* VkHandle::DrawPrimitive(Uint32 vertexCount, Uint32 firstVertex)
 	// #2: instance count
 	// #3: ignore first #3 num vertices
 	// #4: same #3 but instance
-	currentCmd.draw(vertexCount, 1, firstVertex, 0);
+	//currentCmd.draw(vertexCount, 1, firstVertex, 0);
 	return this;
 }
 

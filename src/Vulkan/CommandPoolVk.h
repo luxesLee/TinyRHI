@@ -18,38 +18,41 @@ namespace TinyRHI
 
             auto allocInfo = vk::CommandBufferAllocateInfo()
                 .setCommandPool(commandPool.get())
-                .setCommandBufferCount(1);
-            cmdBufferTmp = std::move(deviceData.logicalDevice.allocateCommandBuffersUnique(allocInfo)[0]);
+                .setCommandBufferCount(2);
+            auto cmdBufferTmpArray = deviceData.logicalDevice.allocateCommandBuffersUnique(allocInfo);
+            cmdBufferTmp[0] = std::move(cmdBufferTmpArray[0]);
+            cmdBufferTmp[1] = std::move(cmdBufferTmpArray[1]);
         }
 
         void SubmitCmdBuffer(
-            // const std::vector<vk::Semaphore>& waitSemaphores,
-            // const std::vector<vk::Semaphore>& signalSemaphores,
-            // const std::optional<vk::PipelineStageFlags>& waitStages,
+            Uint index,
+            const std::vector<vk::Semaphore>& waitSemaphores,
+            const std::vector<vk::Semaphore>& signalSemaphores,
+            const std::optional<vk::PipelineStageFlags>& waitStages,
             const std::optional<vk::Fence> fence)
         {
             vk::SubmitInfo submitInfo = vk::SubmitInfo()
                 .setCommandBufferCount(1)
-                .setPCommandBuffers(&(cmdBufferTmp.get()))
-                // .setWaitSemaphoreCount(waitSemaphores.size())
-                // .setPWaitSemaphores(waitSemaphores.data())
-                // .setSignalSemaphoreCount(signalSemaphores.size())
-                // .setPSignalSemaphores(signalSemaphores.data())
+                .setPCommandBuffers(&(cmdBufferTmp[index].get()))
+                .setWaitSemaphoreCount(waitSemaphores.size())
+                .setPWaitSemaphores(waitSemaphores.data())
+                .setSignalSemaphoreCount(signalSemaphores.size())
+                .setPSignalSemaphores(signalSemaphores.data())
                 ;
 
-            // if(waitStages.has_value())
-            // {
-            //     submitInfo.setPWaitDstStageMask(&waitStages.value());
-            // }
+            if(waitStages.has_value())
+            {
+                submitInfo.setPWaitDstStageMask(&waitStages.value());
+            }
 
             deviceData.graphicsQueue.submit(submitInfo, fence.has_value() ? fence.value() : VK_NULL_HANDLE);
 
             // activeBuffers
         }
 
-        vk::CommandBuffer GetCmdBuffer()
+        vk::CommandBuffer GetCmdBuffer(Uint index)
         {
-            return cmdBufferTmp.get();
+            return cmdBufferTmp[index].get();
         }
 
         auto& CmdPoolHandle()
@@ -62,7 +65,7 @@ namespace TinyRHI
         vk::UniqueCommandPool commandPool;
         std::vector<vk::UniqueCommandBuffer> cmdBuffers;
         std::vector<vk::CommandBuffer> activeBuffers;
-        vk::UniqueCommandBuffer cmdBufferTmp;
+        vk::UniqueCommandBuffer cmdBufferTmp[2];
     };
 
 } // namespace TinyRHI

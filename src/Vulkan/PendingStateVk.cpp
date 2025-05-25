@@ -4,6 +4,22 @@
 
 using namespace TinyRHI;
 
+PipelineLayoutVk* PendingStateVk::GetPipelineLayout(const DeviceData& deviceData)
+{
+    Uint32 hashId = 0;
+    auto& pipelineLayout = pipelineLayoutCache[hashId];
+    if(!pipelineLayout)
+    {
+        std::vector<DescriptorSetLayoutVk> dsLayouts;
+        for(Uint i = 0; i < MaxDescriptorSetCount && writerDirty[i]; i++)
+        {
+            dsLayouts.push_back(DescriptorSetLayoutVk(deviceData, dsWriter[i].GetDSLayoutBindingArray()));
+        }
+        pipelineLayout = std::make_unique<PipelineLayoutVk>(deviceData, dsLayouts);
+    }
+    return pipelineLayout.get();
+}
+
 void GfxPendingStateVk::PrepareDraw()
 {
     UpdateDynamicStates();
@@ -22,13 +38,42 @@ void GfxPendingStateVk::PrepareDraw()
         }
 
         // 2. bind descriptorSet
-        currentCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentPipeline->GetLayout(), 0, dsNum, dsArray[0], 0, nullptr);
+        // currentCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentPipeline->GetLayout(), 0, dsNum, dsArray[0], 0, nullptr);
     }
 
     if(bVertDirty)
     {
         bVertDirty = false;
-        const VertexDeclaration& vertexDecl = currentPipeline->PipelineDescHandle().setting.vertexDecl;
+        // const VertexDeclaration& vertexDecl = currentPipeline->PipelineDescHandle().setting.vertexDecl;
+
+        VertexDeclaration vertexDecl
+        {
+            .vertexBindings
+            {
+                {
+                    .binding = 0,
+                    .stride = sizeof(Float) * 5,
+                    .bInstance = false,
+                },
+            },
+            .attributeDescs
+            {
+                TinyRHI::VertexDeclaration::VertexAttributeDesc
+                {
+                    .location = 0,
+                    .binding = 0,
+                    .offset = 0,
+                    .format = TinyRHI::AttribType::Vec2,
+                },
+                TinyRHI::VertexDeclaration::VertexAttributeDesc
+                {
+                    .location = 1,
+                    .binding = 0,
+                    .offset = 2 * sizeof(Float),
+                    .format = TinyRHI::AttribType::Vec3,
+                },
+            },
+        };
         if(vertexDecl.attributeDescs.size() == 0)
         {
             return;

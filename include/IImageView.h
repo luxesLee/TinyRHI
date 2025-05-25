@@ -11,15 +11,24 @@ namespace TinyRHI
 		Uint32 arrayLayersCount = 1;
 	};
 
+	struct ImageUsage
+	{
+		Bool colorAttach = false;
+		Bool depthAttach = false;
+		Bool Storage = false;
+		Bool Sample = false;
+	};
+
 	struct ImageDesc
 	{
 		enum class ImageType { e2D, e3D } imageType = ImageType::e2D;
 		ImageViewDesc imageViewDesc;
-		Float64 size3[3] = { 0, 0, 0 };
+		Uint size3[3] = { 0, 0, 0 };
 		Format format = Format::Undefined;
 		MSAASamples samples = MSAASamples::e1;
 		Bool bDepth = false;
 		Bool bStaging = false;
+		ImageUsage usage;
 	};
 
 	class IImage
