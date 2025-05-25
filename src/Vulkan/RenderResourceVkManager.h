@@ -23,6 +23,8 @@ namespace TinyRHI
         {
         }
 
+
+    // Pipeline
     public:
         Uint32 pipelineHash()
         {
@@ -37,11 +39,12 @@ namespace TinyRHI
         std::unordered_map<Uint32, std::unique_ptr<ComputePipelineVk>> computePipelineCache;
 
     public:
-        void BeginRenderPass(vk::CommandBuffer cmdBuffer);
+        void BeginRenderPass(vk::CommandBuffer cmdBuffer, Uint32 key);
         void EndRenderPass(vk::CommandBuffer cmdBuffer);
 
+    // Framebuffer RenderPass
     private:
-        FramebufferVk* GetCurrentFramebuffer();
+        FramebufferVk* GetCurrentFramebuffer(Uint32 key);
         RenderPassVk* GetCurrentRenderPass();
 
         Uint32 framebufferHash()
@@ -65,11 +68,24 @@ namespace TinyRHI
         {
             depthAttachment = vkAttachment;
         }
+        void ClearAttachments()
+        {
+            colorAttachments.clear();
+            depthAttachment = nullptr;
+        }
 
     private:
         std::vector<std::shared_ptr<AttachmentVk>> colorAttachments;
         std::shared_ptr<AttachmentVk> depthAttachment;
 
+    // Buffer ImageView
+    public:
+
+
+    private:
+
+
+    // Shader
     public:
         template<IShader::Stage stage>
         void SetShader(IShader* shader)
@@ -95,6 +111,7 @@ namespace TinyRHI
         ShaderVk<IShader::Stage::Vertex>* vertexShader;
         ShaderVk<IShader::Stage::Pixel>* pixelShader;
         ShaderVk<IShader::Stage::Compute>* compShader;
+        
 
     private:
         const DeviceData& deviceData;

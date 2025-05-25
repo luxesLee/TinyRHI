@@ -113,19 +113,20 @@ int main()
         },
     };
 
-     while(!glfwWindowShouldClose(window))
+    while(!glfwWindowShouldClose(window))
     {
+        glfwPollEvents();
+
         pHandle->
             BeginFrame()->
                 BeginCommand()->
+                    // Attachment need to be set before renderPassBegin to get renderPass and framebuffer
                     SetDefaultAttachments(attachmentDesc)->
-                //     SetDepthAttachment()->
+                    // SetDepthAttachment()->
                     BeginRenderPass()->
                         SetVertexShader(vertShader)->
                         SetPixelShader(pixelShader)->
-                //         // PipelineLayout can be built with DescriptorSetLayouts
-                //         // SetxxxxBuffer()->
-                //         // SetxxxxTexture()->
+                        // Buffer Texture need be set before setpipeline to get pipelineLayout
                         SetGraphicsPipeline(gfxSetting)->
                         SetViewport(Extent3D(0, 0, 0), Extent3D(1024, 1024, 0))->
                         SetScissor(Extent2D(0, 0), Extent2D(1024, 1024))->

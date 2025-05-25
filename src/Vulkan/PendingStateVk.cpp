@@ -38,42 +38,16 @@ void GfxPendingStateVk::PrepareDraw()
         }
 
         // 2. bind descriptorSet
-        // currentCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentPipeline->GetLayout(), 0, dsNum, dsArray[0], 0, nullptr);
+        if(dsNum > 0)
+        {
+            currentCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentPipeline->GetLayout(), 0, dsNum, dsArray[0], 0, nullptr);
+        }
     }
 
     if(bVertDirty)
     {
         bVertDirty = false;
-        // const VertexDeclaration& vertexDecl = currentPipeline->PipelineDescHandle().setting.vertexDecl;
-
-        VertexDeclaration vertexDecl
-        {
-            .vertexBindings
-            {
-                {
-                    .binding = 0,
-                    .stride = sizeof(Float) * 5,
-                    .bInstance = false,
-                },
-            },
-            .attributeDescs
-            {
-                TinyRHI::VertexDeclaration::VertexAttributeDesc
-                {
-                    .location = 0,
-                    .binding = 0,
-                    .offset = 0,
-                    .format = TinyRHI::AttribType::Vec2,
-                },
-                TinyRHI::VertexDeclaration::VertexAttributeDesc
-                {
-                    .location = 1,
-                    .binding = 0,
-                    .offset = 2 * sizeof(Float),
-                    .format = TinyRHI::AttribType::Vec3,
-                },
-            },
-        };
+        const VertexDeclaration& vertexDecl = currentPipeline->PipelineDescHandle().setting.vertexDecl;
         if(vertexDecl.attributeDescs.size() == 0)
         {
             return;
@@ -129,6 +103,9 @@ void ComputePendingStateVk::PrepareDispatch()
         }
 
         // 2. bind descriptorSet
-        currentCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, currentPipeline->GetLayout(), 0, dsNum, dsArray[0], 0, nullptr);
+        if(dsNum > 0)
+        {
+            currentCmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, currentPipeline->GetLayout(), 0, dsNum, dsArray[0], 0, nullptr);
+        }
     }
 }

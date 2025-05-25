@@ -39,13 +39,15 @@ ComputePipelineVk *RenderResourceVkManager::GetComputePipeline(PipelineLayoutVk 
     return computePipeline.get();
 }
 
-void RenderResourceVkManager::BeginRenderPass(vk::CommandBuffer cmdBuffer)
+void RenderResourceVkManager::BeginRenderPass(vk::CommandBuffer cmdBuffer, Uint32 key)
 {
-    FramebufferVk* vkFramebuffer = GetCurrentFramebuffer();
+    FramebufferVk* vkFramebuffer = GetCurrentFramebuffer(key);
     RenderPassVk* vkRenderPass = GetCurrentRenderPass();
 
     std::vector<vk::ClearValue> clearValues;
     std::vector<vk::Rect2D> renderAreas;
+    vk::Rect2D renderArea;
+
     for(const auto& colorAttachment : colorAttachments)
     {
         if(colorAttachment)
@@ -62,10 +64,10 @@ void RenderResourceVkManager::BeginRenderPass(vk::CommandBuffer cmdBuffer)
     assert(clearValues.size() > 0);
     assert(renderAreas.size() > 0);
 
-    vk::Rect2D renderArea = renderAreas[0];
+    renderArea = renderAreas[0];
     for(Uint i = 0; i < renderAreas.size(); i++)
     {
-        assert(renderArea == renderAreas[i]);
+       assert(renderArea == renderAreas[i]);
     }
 
     vk::RenderPassBeginInfo beginInfo = vk::RenderPassBeginInfo()	
@@ -83,25 +85,36 @@ void RenderResourceVkManager::EndRenderPass(vk::CommandBuffer cmdBuffer)
     cmdBuffer.endRenderPass();
 }
 
-FramebufferVk* RenderResourceVkManager::GetCurrentFramebuffer()
+FramebufferVk* RenderResourceVkManager::GetCurrentFramebuffer(Uint32 key)
 {
-    Uint32 key = framebufferHash();
+    // Uint32 key = framebufferHash();
     auto& framebuffer = frameBufferCache[key];
     if(!framebuffer)
     {
         FramebufferDesc desc;
-        desc.framebufferExt = Extent2D(1024, 1024);
+        std::vector<vk::Extent2D> framebufferExt;
+        vk::Extent2D fbExt;
+
         for(const auto& colorAttachment : colorAttachments)
         {
             if(colorAttachment)
             {
                 desc.imageViews.push_back(colorAttachment->ImageViewHandle());
+                framebufferExt.push_back(colorAttachment->GetRenderArea().extent);
             }
         }
         if(depthAttachment)
         {
             desc.imageViews.push_back(depthAttachment->ImageViewHandle());
+            framebufferExt.push_back(depthAttachment->GetRenderArea().extent);
         }
+
+        fbExt = framebufferExt[0];
+        for(Uint i = 0; i < framebufferExt.size(); i++)
+        {
+            assert(fbExt == framebufferExt[i]);
+        }
+        desc.framebufferExt = {fbExt.width, fbExt.height};
 
         desc.renderPass = GetCurrentRenderPass();
 

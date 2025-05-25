@@ -4,7 +4,7 @@ using namespace TinyRHI;
 
 GraphicsPipelineVk::GraphicsPipelineVk(
     const DeviceData& deviceData,
-    const GraphicsPipelineDesc& _graphicsPipelineDesc)
+    GraphicsPipelineDesc _graphicsPipelineDesc)
     : graphicsPipelineDesc(_graphicsPipelineDesc)
 {
     PipelineLayoutVk* vkPipelineLayout = dynamic_cast<PipelineLayoutVk*>(graphicsPipelineDesc.pipelineLayout);

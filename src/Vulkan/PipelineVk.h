@@ -47,7 +47,7 @@ namespace TinyRHI
 	public:
 		GraphicsPipelineVk(
 			const DeviceData& deviceData,
-			const GraphicsPipelineDesc& _graphicsPipelineDesc);
+			GraphicsPipelineDesc _graphicsPipelineDesc);
 
 		void Bind(vk::CommandBuffer cmdBuffer)
 		{
@@ -72,7 +72,7 @@ namespace TinyRHI
 	private:
 		vk::UniquePipeline pipeline;
 		vk::PipelineLayout pipelineLayout;
-		const GraphicsPipelineDesc& graphicsPipelineDesc;
+		GraphicsPipelineDesc graphicsPipelineDesc;
 	};
 
 	class ComputePipelineVk : public IComputePipeline

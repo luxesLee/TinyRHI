@@ -386,7 +386,7 @@ IRHIHandle* VkHandle::EndFrame()
 	auto result = deviceData.presentQueue.presentKHR(presentInfo);
 	assert(result == vk::Result::eSuccess);
 	swapImageIndex = -1;
-	//currentFrame = (currentFrame + 1) % 2;
+	currentFrame = (currentFrame + 1) % 2;
 	return this;
 }
 
@@ -396,6 +396,7 @@ IRHIHandle* VkHandle::BeginCommand()
 	currentCmd = cmdPoolManager->GetCmdBuffer(currentFrame);
 	currentCmd.reset();
 	currentCmd.begin(vk::CommandBufferBeginInfo());
+	pRenderPassBeginManager->ClearAttachments();
 	return this;
 }
 
@@ -419,13 +420,14 @@ IRHIHandle* VkHandle::Commit()
 
 IRHIHandle* VkHandle::BeginRenderPass()
 {
-	pRenderPassBeginManager->BeginRenderPass(currentCmd);
+	pRenderPassBeginManager->BeginRenderPass(currentCmd, currentFrame);
 	return this;
 }
 
 IRHIHandle* VkHandle::EndRenderPass()
 {
 	pRenderPassBeginManager->EndRenderPass(currentCmd);
+	pGfxPending->Reset();
 	return this;
 }
 
@@ -616,7 +618,7 @@ IRHIHandle* VkHandle::DrawPrimitive(Uint32 vertexCount, Uint32 firstVertex)
 	// #2: instance count
 	// #3: ignore first #3 num vertices
 	// #4: same #3 but instance
-	//currentCmd.draw(vertexCount, 1, firstVertex, 0);
+	currentCmd.draw(vertexCount, 1, firstVertex, 0);
 	return this;
 }
 

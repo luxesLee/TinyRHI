@@ -4,7 +4,7 @@ using namespace TinyRHI;
 
 ImageVk::ImageVk(
     const DeviceData& _deviceData,
-    const ImageDesc& _imageDesc)
+    ImageDesc _imageDesc)
     : deviceData(_deviceData), imageDesc(_imageDesc)
 {
     this->size = imageDesc.size3[0] * imageDesc.size3[1] * imageDesc.size3[2];
@@ -41,7 +41,7 @@ ImageVk::ImageVk(
 ImageVk::ImageVk(
     const DeviceData& _deviceData, 
     vk::Image _image, 
-    const ImageDesc &_imageDesc)
+    ImageDesc _imageDesc)
     : deviceData(_deviceData), imageDesc(_imageDesc)
 {
 }
@@ -92,7 +92,7 @@ void ImageVk::SetImageData(void *data, Uint32 dataSize)
 
 ImageViewVk::ImageViewVk(
     const DeviceData& deviceData,
-    const ImageDesc& imageDesc)
+    ImageDesc imageDesc)
     : imagePtr(std::make_unique<ImageVk>(deviceData, imageDesc))
 {
     vk::ImageViewType viewType = (imageDesc.imageType == ImageDesc::ImageType::e2D) ?
@@ -114,7 +114,7 @@ ImageViewVk::ImageViewVk(
     imageView = deviceData.logicalDevice.createImageViewUnique(imageViewInfo);
 }
 
-ImageViewVk::ImageViewVk(const DeviceData &deviceData, const ImageDesc &imageDesc, vk::Image image)
+ImageViewVk::ImageViewVk(const DeviceData &deviceData, ImageDesc imageDesc, vk::Image image)
     : imagePtr(std::make_unique<ImageVk>(deviceData, image, imageDesc))
 {
     vk::ImageViewType viewType = (imageDesc.imageType == ImageDesc::ImageType::e2D) ?

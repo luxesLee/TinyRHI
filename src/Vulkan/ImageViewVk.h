@@ -11,13 +11,13 @@ namespace TinyRHI
 	public:
 		ImageVk(
 			const DeviceData& _deviceData,
-			const ImageDesc& _imageDesc);
+			ImageDesc _imageDesc);
 
 		// For swapChainImageView
 		ImageVk(
 			const DeviceData& _deviceData,
 			vk::Image _image, 
-			const ImageDesc& _imageDesc);
+			ImageDesc _imageDesc);
 
 		void SetImageData(void* data, Uint32 dataSize);
 
@@ -38,7 +38,7 @@ namespace TinyRHI
 
 	private:
 		const DeviceData& deviceData;
-		const ImageDesc& imageDesc;
+		ImageDesc imageDesc;
 
 		vk::UniqueImage image;
 		vk::UniqueDeviceMemory imageMemory;
@@ -50,12 +50,12 @@ namespace TinyRHI
 	public:
 		ImageViewVk(
 			const DeviceData& deviceData,
-			const ImageDesc& imageDesc);
+			ImageDesc imageDesc);
 
 		// For swapChainImageView
 		ImageViewVk(
 			const DeviceData& deviceData,
-			const ImageDesc& imageDesc,
+			ImageDesc imageDesc,
 			vk::Image image);
 
 		void SetImageData(void* data, Uint32 dataSize)
@@ -155,7 +155,7 @@ namespace TinyRHI
 	class AttachmentVk
 	{
 	public:
-		AttachmentVk(ImageViewVk* _imageView, const AttachmentDesc& _attachmentDesc, Bool _bDepth)
+		AttachmentVk(ImageViewVk* _imageView, AttachmentDesc _attachmentDesc, Bool _bDepth)
 			: imageView(_imageView), attachmentDesc(_attachmentDesc), bDepth(_bDepth)
 		{
 		}
@@ -201,7 +201,7 @@ namespace TinyRHI
 
 	private:
 		ImageViewVk* imageView;
-		const AttachmentDesc& attachmentDesc;
+		AttachmentDesc attachmentDesc;
 		Bool bDepth;
 	};
 
