@@ -396,7 +396,7 @@ IRHIHandle* VkHandle::BeginCommand()
 	currentCmd = cmdPoolManager->GetCmdBuffer(currentFrame);
 	currentCmd.reset();
 	currentCmd.begin(vk::CommandBufferBeginInfo());
-	pRenderPassBeginManager->ClearAttachments();
+	renderResManager->ClearAttachments();
 	return this;
 }
 
@@ -420,13 +420,13 @@ IRHIHandle* VkHandle::Commit()
 
 IRHIHandle* VkHandle::BeginRenderPass()
 {
-	pRenderPassBeginManager->BeginRenderPass(currentCmd, currentFrame);
+	renderResManager->BeginRenderPass(currentCmd);
 	return this;
 }
 
 IRHIHandle* VkHandle::EndRenderPass()
 {
-	pRenderPassBeginManager->EndRenderPass(currentCmd);
+	renderResManager->EndRenderPass(currentCmd);
 	pGfxPending->Reset();
 	return this;
 }
@@ -434,7 +434,7 @@ IRHIHandle* VkHandle::EndRenderPass()
 IRHIHandle* VkHandle::SetGraphicsPipeline(const GfxSetting& gfxSetting)
 {
 	PipelineLayoutVk* pipelineLayout = pGfxPending->GetPipelineLayout(deviceData);
-	GraphicsPipelineVk* vkGfxPipeline = pRenderPassBeginManager->GetGfxPipeline(gfxSetting, pipelineLayout);
+	GraphicsPipelineVk* vkGfxPipeline = renderResManager->GetGfxPipeline(gfxSetting, pipelineLayout);
 	if(vkGfxPipeline)
 	{
 		if(pGfxPending->SetPipeline(vkGfxPipeline))
@@ -451,7 +451,7 @@ IRHIHandle* VkHandle::SetGraphicsPipeline(const GfxSetting& gfxSetting)
 IRHIHandle* VkHandle::SetComputePipeline()
 {
 	PipelineLayoutVk* pipelineLayout = pComputePending->GetPipelineLayout(deviceData);
-	ComputePipelineVk* vkComputePipeline = pRenderPassBeginManager->GetComputePipeline(pipelineLayout);
+	ComputePipelineVk* vkComputePipeline = renderResManager->GetComputePipeline(pipelineLayout);
 	if(vkComputePipeline)
 	{
 		if(pComputePending->SetPipeline(vkComputePipeline))
@@ -467,7 +467,7 @@ IRHIHandle* VkHandle::SetComputePipeline()
 IRHIHandle* VkHandle::SetDefaultAttachments(const AttachmentDesc &attachmentDesc)
 {
 	std::shared_ptr<AttachmentVk> colorAttach = std::make_shared<AttachmentVk>(swapImageViews[currentFrame].get(), attachmentDesc, false);
-	pRenderPassBeginManager->SetColorAttachments(colorAttach);
+	renderResManager->SetColorAttachments(colorAttach);
     return this;
 }
 
@@ -477,7 +477,7 @@ IRHIHandle *VkHandle::SetColorAttachments(ITexture *texture, const AttachmentDes
 	if(vkTexture)
 	{
 		std::shared_ptr<AttachmentVk> colorAttach = std::make_shared<AttachmentVk>(vkTexture->ImageViewPtr(), attachmentDesc, false);
-		pRenderPassBeginManager->SetColorAttachments(colorAttach);
+		renderResManager->SetColorAttachments(colorAttach);
 	}
     return this;
 }
@@ -488,7 +488,7 @@ IRHIHandle* VkHandle::SetDepthAttachment(ITexture *texture, const AttachmentDesc
 	if(vkTexture)
 	{
 		std::shared_ptr<AttachmentVk> depthAttach = std::make_shared<AttachmentVk>(vkTexture->ImageViewPtr(), attachmentDesc, true);
-		pRenderPassBeginManager->SetDepthAttachment(depthAttach);
+		renderResManager->SetDepthAttachment(depthAttach);
 	}
     return this;
 }
@@ -496,21 +496,21 @@ IRHIHandle* VkHandle::SetDepthAttachment(ITexture *texture, const AttachmentDesc
 IRHIHandle* VkHandle::SetVertexShader(IShader *shader)
 {
 	assert(shader);
-	pRenderPassBeginManager->SetShader<IShader::Stage::Vertex>(shader);
+	renderResManager->SetShader<IShader::Stage::Vertex>(shader);
     return this;
 }
 
 IRHIHandle* VkHandle::SetPixelShader(IShader *shader)
 {
 	assert(shader);
-	pRenderPassBeginManager->SetShader<IShader::Stage::Pixel>(shader);
+	renderResManager->SetShader<IShader::Stage::Pixel>(shader);
     return this;
 }
 
 IRHIHandle* VkHandle::SetComputeShader(IShader *shader)
 {
 	assert(shader);
-	pRenderPassBeginManager->SetShader<IShader::Stage::Compute>(shader);
+	renderResManager->SetShader<IShader::Stage::Compute>(shader);
     return this;
 }
 

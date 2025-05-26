@@ -1,10 +1,11 @@
 #pragma once
 #include "HeaderVk.h"
 #include "IBuffer.h"
+#include "UniqueHash.h"
 
 namespace TinyRHI
 {
-	class BufferVk : public IBuffer
+	class BufferVk : public IBuffer, public UniqueHash
 	{
 	public:
 		BufferVk(

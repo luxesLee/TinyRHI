@@ -1,11 +1,12 @@
 #pragma once
 #include "HeaderVk.h"
 #include "IShader.h"
+#include "UniqueHash.h"
 
 namespace TinyRHI
 {
 	template<IShader::Stage stage>
-	class ShaderVk : public IShader
+	class ShaderVk : public IShader, public UniqueHash
 	{
 	public:
 		ShaderVk(

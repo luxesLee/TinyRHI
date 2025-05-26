@@ -5,6 +5,8 @@
 #include "RenderPassVk.h"
 #include "ShaderVk.h"
 #include "PipelineVk.h"
+#include "BufferVk.h"
+#include "ImageViewVk.h"
 
 namespace TinyRHI
 {
@@ -26,11 +28,6 @@ namespace TinyRHI
 
     // Pipeline
     public:
-        Uint32 pipelineHash()
-        {
-            return 0U;
-        }
-
         GraphicsPipelineVk* GetGfxPipeline(const GfxSetting& setting, PipelineLayoutVk* pipelineLayout);
         ComputePipelineVk* GetComputePipeline(PipelineLayoutVk* pipelineLayout);
 
@@ -39,22 +36,13 @@ namespace TinyRHI
         std::unordered_map<Uint32, std::unique_ptr<ComputePipelineVk>> computePipelineCache;
 
     public:
-        void BeginRenderPass(vk::CommandBuffer cmdBuffer, Uint32 key);
+        void BeginRenderPass(vk::CommandBuffer cmdBuffer);
         void EndRenderPass(vk::CommandBuffer cmdBuffer);
 
     // Framebuffer RenderPass
     private:
-        FramebufferVk* GetCurrentFramebuffer(Uint32 key);
+        FramebufferVk* GetCurrentFramebuffer();
         RenderPassVk* GetCurrentRenderPass();
-
-        Uint32 framebufferHash()
-        {
-            return 0U;
-        }
-        Uint32 renderPassHash(const RenderPassState& state)
-        {
-            return 0U;
-        }
 
         std::unordered_map<Uint32, std::unique_ptr<FramebufferVk>> frameBufferCache;
         std::unordered_map<Uint32, std::unique_ptr<RenderPassVk>> renderPassCache;
@@ -62,27 +50,40 @@ namespace TinyRHI
     public:
         void SetColorAttachments(std::shared_ptr<AttachmentVk> vkAttachment)
         {
+            if(attachmentRect == vk::Rect2D())
+            {
+                attachmentRect = vkAttachment->GetRenderArea();
+            }
+            else
+            {
+                assert(attachmentRect == vkAttachment->GetRenderArea());
+            }
             colorAttachments.push_back(vkAttachment);
         }
         void SetDepthAttachment(std::shared_ptr<AttachmentVk> vkAttachment)
         {
+            if(attachmentRect == vk::Rect2D())
+            {
+                attachmentRect = vkAttachment->GetRenderArea();
+            }
+            else
+            {
+                assert(attachmentRect == vkAttachment->GetRenderArea());
+            }
             depthAttachment = vkAttachment;
         }
         void ClearAttachments()
         {
             colorAttachments.clear();
             depthAttachment = nullptr;
+            attachmentRect = vk::Rect2D();
         }
 
     private:
         std::vector<std::shared_ptr<AttachmentVk>> colorAttachments;
         std::shared_ptr<AttachmentVk> depthAttachment;
+        vk::Rect2D attachmentRect;
 
-    // Buffer ImageView
-    public:
-
-
-    private:
 
 
     // Shader

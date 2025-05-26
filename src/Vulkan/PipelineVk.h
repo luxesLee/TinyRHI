@@ -3,10 +3,11 @@
 #include "RenderPassVk.h"
 #include "ShaderVk.h"
 #include "DescriptorSetPoolVk.h"
+#include "UniqueHash.h"
 
 namespace TinyRHI
 {
-	class PipelineLayoutVk : public IPipelineLayout
+	class PipelineLayoutVk : public IPipelineLayout, public UniqueHash
 	{
 	public:
 		PipelineLayoutVk(

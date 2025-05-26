@@ -33,7 +33,7 @@ namespace TinyRHI
 		{
 			pGfxPending = std::make_unique<GfxPendingStateVk>();
 			pComputePending = std::make_unique<ComputePendingStateVk>();
-			pRenderPassBeginManager = std::make_unique<RenderResourceVkManager>(deviceData);
+			renderResManager = std::make_unique<RenderResourceVkManager>(deviceData);
 		}
 
 #ifdef DEBUG_VULKAN_MACRO
@@ -140,7 +140,7 @@ namespace TinyRHI
 		std::unique_ptr<GfxPendingStateVk> pGfxPending;
 		std::unique_ptr<ComputePendingStateVk> pComputePending;
 
-		std::unique_ptr<RenderResourceVkManager> pRenderPassBeginManager;
+		std::unique_ptr<RenderResourceVkManager> renderResManager;
     };
 
 

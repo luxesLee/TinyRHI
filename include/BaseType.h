@@ -37,8 +37,8 @@ enum class MSAASamples { e1, e2, e4, e8, e16 };
 struct ClearValues
 {
 	Float color[4];
-	Float depth; 
-	Uint32 stencil;
+	Float depth = 0; 
+	Uint32 stencil = 0;
 };
 
 enum class Format

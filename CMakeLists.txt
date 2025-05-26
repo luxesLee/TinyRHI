@@ -43,7 +43,7 @@ elseif(UNIX)
     target_compile_definitions(TinyRHI PRIVATE LINUX_MACRO)
 endif()
 
-target_compile_definitions(TinyRHI PRIVATE DEBUG_VULKAN_MACRO)
+# target_compile_definitions(TinyRHI PRIVATE DEBUG_VULKAN_MACRO)
 
 target_include_directories(TinyRHI PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(TinyRHI PRIVATE ${Vulkan_INCLUDE_DIRS})

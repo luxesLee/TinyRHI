@@ -3,6 +3,7 @@
 #include "HeaderVk.h"
 #include "BufferVk.h"
 #include "SamplerVk.h"
+#include "UniqueHash.h"
 
 namespace TinyRHI
 {
@@ -45,7 +46,7 @@ namespace TinyRHI
 		vk::DeviceSize size;
 	};
 
-	class ImageViewVk : public IImageView
+	class ImageViewVk : public IImageView, public UniqueHash
 	{
 	public:
 		ImageViewVk(

@@ -1,9 +1,10 @@
 #pragma once
 #include "HeaderVk.h"
+#include "UniqueHash.h"
 
 namespace TinyRHI
 {
-	class RenderPassVk final : public IRenderPass
+	class RenderPassVk final : public IRenderPass, public UniqueHash
 	{
 	public:
 		RenderPassVk() = delete;
