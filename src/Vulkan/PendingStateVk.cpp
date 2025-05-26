@@ -6,15 +6,17 @@ using namespace TinyRHI;
 
 PipelineLayoutVk* PendingStateVk::GetPipelineLayout(const DeviceData& deviceData)
 {
-    Uint32 hashId = 0;
-    auto& pipelineLayout = pipelineLayoutCache[hashId];
+    Uint32 hashResult = 0;
+    std::vector<DescriptorSetLayoutVk> dsLayouts;
+    for(Uint i = 0; i < MaxDescriptorSetCount && writerDirty[i]; i++)
+    {
+        dsLayouts.push_back(DescriptorSetLayoutVk(deviceData, dsWriter[i].GetDSLayoutBindingArray()));
+    }
+
+    auto& pipelineLayout = pipelineLayoutCache[hashResult];
     if(!pipelineLayout)
     {
-        std::vector<DescriptorSetLayoutVk> dsLayouts;
-        for(Uint i = 0; i < MaxDescriptorSetCount && writerDirty[i]; i++)
-        {
-            dsLayouts.push_back(DescriptorSetLayoutVk(deviceData, dsWriter[i].GetDSLayoutBindingArray()));
-        }
+
         pipelineLayout = std::make_unique<PipelineLayoutVk>(deviceData, dsLayouts);
     }
     return pipelineLayout.get();
@@ -88,7 +90,6 @@ void GfxPendingStateVk::PrepareDraw()
 
 void ComputePendingStateVk::PrepareDispatch()
 {
-
     if(dsChanged)
     {
         dsChanged = false;

@@ -52,10 +52,10 @@ namespace TinyRHI
 		virtual IRHIHandle* SetViewport(Extent3D minExt, Extent3D maxExt) = 0;
 		virtual IRHIHandle* SetScissor(Bool bEnable, Extent2D minExt, Extent2D maxExt) = 0;
 
-		virtual IRHIHandle* SetSamplerTexture(ITexture* texture, Uint setId, Uint bindingId);
-		virtual IRHIHandle* SetStorageTexture(ITexture* texture, Uint setId, Uint bindingId);
-		virtual IRHIHandle* SetStorageBuffer(IBuffer* buffer, Uint setId, Uint bindingId);
-		virtual IRHIHandle* SetUniformBuffer(IBuffer* Buffer, Uint setId, Uint bindingId);
+		virtual IRHIHandle* SetSamplerTexture(ITexture* texture, IShader::Stage stage, Uint setId, Uint bindingId);
+		virtual IRHIHandle* SetStorageTexture(ITexture* texture, IShader::Stage stage, Uint setId, Uint bindingId);
+		virtual IRHIHandle* SetStorageBuffer(IBuffer* buffer, IShader::Stage stage, Uint setId, Uint bindingId);
+		virtual IRHIHandle* SetUniformBuffer(IBuffer* Buffer, IShader::Stage stage, Uint setId, Uint bindingId);
 
         virtual IRHIHandle* DrawPrimitive(Uint32 vertexCount, Uint32 firstVertex);
 		virtual IRHIHandle* DrawPrimitiveIndirect(IBuffer* argumentBuffer, Uint32 argumentOffset);

@@ -448,4 +448,19 @@ namespace TinyRHI
 		}
 		return usage;
 	}
+
+	inline vk::ShaderStageFlags ConvertShaderStage(IShader::Stage stage)
+	{
+		switch (stage)
+		{
+		case IShader::Stage::Vertex:
+			return vk::ShaderStageFlagBits::eVertex;
+		case IShader::Stage::Pixel:
+			return vk::ShaderStageFlagBits::eFragment;
+		case IShader::Stage::Compute:
+			return vk::ShaderStageFlagBits::eCompute;
+		}
+		return vk::ShaderStageFlagBits::eAll;
+	}
+
 }

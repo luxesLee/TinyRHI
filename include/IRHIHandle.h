@@ -57,13 +57,14 @@ namespace TinyRHI
 		virtual IRHIHandle* SetComputeShader(IShader* shader) = 0;
 
 		virtual IRHIHandle* SetVertexStream(Uint32 vertId, IBuffer* buffer, Uint32 offset) = 0;
+		virtual IRHIHandle* SetViewport(Extent2D minExt, Extent2D maxExt) = 0;
 		virtual IRHIHandle* SetViewport(Extent3D minExt, Extent3D maxExt) = 0;
 		virtual IRHIHandle* SetScissor(Extent2D minExt, Extent2D maxExt) = 0;
 
-		virtual IRHIHandle* SetSamplerTexture(ITexture* texture, Uint setId, Uint bindingId) = 0;
-		virtual IRHIHandle* SetStorageTexture(ITexture* texture, Uint setId, Uint bindingId) = 0;
-		virtual IRHIHandle* SetStorageBuffer(IBuffer* buffer, Uint setId, Uint bindingId) = 0;
-		virtual IRHIHandle* SetUniformBuffer(IBuffer* Buffer, Uint setId, Uint bindingId) = 0;
+		virtual IRHIHandle* SetSamplerTexture(ITexture* texture, IShader::Stage stage, Uint setId, Uint bindingId) = 0;
+		virtual IRHIHandle* SetStorageTexture(ITexture* texture, IShader::Stage stage, Uint setId, Uint bindingId) = 0;
+		virtual IRHIHandle* SetStorageBuffer(IBuffer* buffer, IShader::Stage stage, Uint setId, Uint bindingId) = 0;
+		virtual IRHIHandle* SetUniformBuffer(IBuffer* Buffer, IShader::Stage stage, Uint setId, Uint bindingId) = 0;
 
 		virtual IRHIHandle* DrawPrimitive(Uint32 vertexCount, Uint32 firstVertex) = 0;
 		virtual IRHIHandle* DrawPrimitiveIndirect(IBuffer* argumentBuffer, Uint32 argumentOffset) = 0;

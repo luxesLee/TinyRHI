@@ -524,6 +524,16 @@ IRHIHandle *VkHandle::SetVertexStream(Uint32 vertId, IBuffer *buffer, Uint32 off
 	return this;
 }
 
+IRHIHandle* VkHandle::SetViewport(Extent2D minExt, Extent2D maxExt)
+{
+	vk::Viewport viewport;
+	viewport.setMinDepth(0).setMaxDepth(0);
+	viewport.setX(minExt.width).setY(minExt.height);
+	viewport.setWidth(maxExt.width - minExt.width).setHeight(maxExt.height - minExt.height);
+	pGfxPending->SetViewport(viewport);
+	return this;
+}
+
 IRHIHandle* VkHandle::SetViewport(Extent3D minExt, Extent3D maxExt)
 {
 	vk::Viewport viewport;
@@ -543,69 +553,69 @@ IRHIHandle* VkHandle::SetScissor(Extent2D minExt, Extent2D maxExt)
 	return this;
 }
 
-IRHIHandle* VkHandle::SetSamplerTexture(ITexture *texture, Uint setId, Uint bindingId)
+IRHIHandle* VkHandle::SetSamplerTexture(ITexture *texture, IShader::Stage stage, Uint setId, Uint bindingId)
 {
 	TextureVk* vkTexture = dynamic_cast<TextureVk*>(texture);
 	if(vkTexture)
 	{
 		if(bCurrentGfx)
 		{
-			pGfxPending->SetSamplerImage(vkTexture, setId, bindingId);
+			pGfxPending->SetSamplerImage(vkTexture, stage, setId, bindingId);
 		}
 		else
 		{
-			pComputePending->SetSamplerImage(vkTexture, setId, bindingId);
+			pComputePending->SetSamplerImage(vkTexture, stage, setId, bindingId);
 		}
 	}
 	return this;
 }
 
-IRHIHandle* VkHandle::SetStorageTexture(ITexture *texture, Uint setId, Uint bindingId)
+IRHIHandle* VkHandle::SetStorageTexture(ITexture *texture, IShader::Stage stage, Uint setId, Uint bindingId)
 {
 	TextureVk* vkTexture = dynamic_cast<TextureVk*>(texture);
 	if(vkTexture)
 	{
 		if(bCurrentGfx)
 		{
-			pGfxPending->SetStorageImage(vkTexture, setId, bindingId);
+			pGfxPending->SetStorageImage(vkTexture, stage, setId, bindingId);
 		}
 		else
 		{
-			pComputePending->SetStorageImage(vkTexture, setId, bindingId);
+			pComputePending->SetStorageImage(vkTexture, stage, setId, bindingId);
 		}
 	}
 	return this;
 }
 
-IRHIHandle* VkHandle::SetStorageBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
+IRHIHandle* VkHandle::SetStorageBuffer(IBuffer *buffer, IShader::Stage stage, Uint setId, Uint bindingId)
 {
 	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
 	if(vkBuffer)
 	{
 		if(bCurrentGfx)
 		{
-			pGfxPending->SetStorageBuffer(vkBuffer, setId, bindingId);
+			pGfxPending->SetStorageBuffer(vkBuffer, stage, setId, bindingId);
 		}
 		else
 		{
-			pComputePending->SetStorageBuffer(vkBuffer, setId, bindingId);
+			pComputePending->SetStorageBuffer(vkBuffer, stage, setId, bindingId);
 		}
 	}
 	return this;
 }
 
-IRHIHandle* VkHandle::SetUniformBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
+IRHIHandle* VkHandle::SetUniformBuffer(IBuffer *buffer, IShader::Stage stage, Uint setId, Uint bindingId)
 {
 	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
 	if(vkBuffer)
 	{
 		if(bCurrentGfx)
 		{
-			pGfxPending->SetUniformBuffer(vkBuffer, setId, bindingId);
+			pGfxPending->SetUniformBuffer(vkBuffer, stage, setId, bindingId);
 		}
 		else
 		{
-			pComputePending->SetUniformBuffer(vkBuffer, setId, bindingId);
+			pComputePending->SetUniformBuffer(vkBuffer, stage, setId, bindingId);
 		}
 	}
 	return this;

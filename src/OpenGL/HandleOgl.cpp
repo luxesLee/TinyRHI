@@ -53,22 +53,22 @@ IRHIHandle* HandleOgl::Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCoun
     return this;
 }
 
-IRHIHandle* HandleOgl::SetSamplerTexture(ITexture *texture, Uint setId, Uint bindingId)
+IRHIHandle* HandleOgl::SetSamplerTexture(ITexture *texture, IShader::Stage stage, Uint setId, Uint bindingId)
 {
     return this;
 }
 
-IRHIHandle* HandleOgl::SetStorageTexture(ITexture *texture, Uint setId, Uint bindingId)
+IRHIHandle* HandleOgl::SetStorageTexture(ITexture *texture, IShader::Stage stage, Uint setId, Uint bindingId)
 {
     return this;
 }
 
-IRHIHandle* HandleOgl::SetStorageBuffer(IBuffer *buffer, Uint setId, Uint bindingId)
+IRHIHandle* HandleOgl::SetStorageBuffer(IBuffer *buffer, IShader::Stage stage, Uint setId, Uint bindingId)
 {
     return this;
 }
 
-IRHIHandle* HandleOgl::SetUniformBuffer(IBuffer *Buffer, Uint setId, Uint bindingId)
+IRHIHandle* HandleOgl::SetUniformBuffer(IBuffer *Buffer, IShader::Stage stage, Uint setId, Uint bindingId)
 {
     return this;
 }

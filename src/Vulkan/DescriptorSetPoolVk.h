@@ -113,30 +113,6 @@ namespace TinyRHI
 		DescriptorSetLayoutVk* descriptorSetLayout;
 	};
 
-	class DescriptorSetArrayVk
-	{
-	public:
-
-		VkDescriptorSet* GetIndex(Uint32 index)
-		{
-			return &dataArray[index];
-		}
-
-		vk::DescriptorSet* Handle()
-		{
-
-		}
-
-		Uint32 Size() const
-		{
-			return dataArray.size();
-		}
-
-	private:
-		std::vector<VkDescriptorSet> dataArray;
-
-	};
-
 	class DescriptorSetWriterVk
 	{
 	public:
@@ -150,7 +126,7 @@ namespace TinyRHI
 		// offset: 0 default
 		// range: bufferSize
 		template <Bool bUniform>
-		Bool WriteBuffer(vk::Buffer buffer, Uint32 offset, Uint32 range, Uint32 dstBinding)
+		Bool WriteBuffer(vk::Buffer buffer, IShader::Stage stage, Uint32 offset, Uint32 range, Uint32 dstBinding)
 		{
 			auto bufferInfo = vk::DescriptorBufferInfo()
 				.setBuffer(buffer)
@@ -172,12 +148,13 @@ namespace TinyRHI
 			}
 
 			writeDescriptorSets.push_back(writeDescriptorSet);
+			shaderStages.push_back(ConvertShaderStage(stage));
 			bDirty = true;
 			return true;
 		}
 
 		template<Bool bWriteEnable>
-		Bool WriteImage(vk::ImageView imageView, vk::Sampler sampler, Uint32 dstBinding)
+		Bool WriteImage(vk::ImageView imageView, IShader::Stage stage, vk::Sampler sampler, Uint32 dstBinding)
 		{
 			auto imageInfo = vk::DescriptorImageInfo()
 				.setImageView(imageView)
@@ -200,6 +177,7 @@ namespace TinyRHI
 			}
 
 			writeDescriptorSets.push_back(writeDescriptorSet);
+			shaderStages.push_back(ConvertShaderStage(stage));
 			bDirty = true;
 			return true;
 		}
@@ -219,7 +197,16 @@ namespace TinyRHI
 		DescriptorSetLayoutBindingDescArray GetDSLayoutBindingArray()
 		{
 			DescriptorSetLayoutBindingDescArray dsLayoutBindingArray;
-
+			for(Uint32 i = 0; i < writeDescriptorSets.size(); i++)
+			{
+				auto& writeDescriptorSet = writeDescriptorSets[i];
+				DescriptorSetLayoutBindingDesc dsLayoutBindingDesc;
+				
+				dsLayoutBindingDesc.binding = writeDescriptorSet.dstBinding;
+				dsLayoutBindingDesc.type = writeDescriptorSet.descriptorType;
+				dsLayoutBindingDesc.flag = shaderStages[i];
+				dsLayoutBindingArray.push_back(dsLayoutBindingDesc);
+			}
 			return dsLayoutBindingArray;
 		}
 
@@ -241,6 +228,7 @@ namespace TinyRHI
 
 	private:
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
+		std::vector<vk::ShaderStageFlags> shaderStages;
 		DescriptorSetVk* currentDescriptorSet;
 		Bool bDirty;
 	};

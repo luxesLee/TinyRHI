@@ -26,38 +26,38 @@ namespace TinyRHI
             currentCmdBuffer = cmdBuffer;
         }
 
-        void SetSamplerImage(TextureVk* vkTexture, Uint setId, Uint bindingId)
+        void SetSamplerImage(TextureVk* vkTexture, IShader::Stage stage, Uint setId, Uint bindingId)
         {
-            return SetTexture<false>(vkTexture, setId, bindingId);
+            return SetTexture<false>(vkTexture, stage, setId, bindingId);
         }
 
-        void SetStorageImage(TextureVk* vkTexture, Uint setId, Uint bindingId)
+        void SetStorageImage(TextureVk* vkTexture, IShader::Stage stage, Uint setId, Uint bindingId)
         {
-            return SetTexture<true>(vkTexture, setId, bindingId);
+            return SetTexture<true>(vkTexture, stage, setId, bindingId);
         }
 
-        void SetStorageBuffer(BufferVk* vkBuffer, Uint setId, Uint bindingId)
+        void SetStorageBuffer(BufferVk* vkBuffer, IShader::Stage stage, Uint setId, Uint bindingId)
         {
-            return SetBuffer<false>(vkBuffer, setId, bindingId);
+            return SetBuffer<false>(vkBuffer, stage, setId, bindingId);
         }
-        void SetUniformBuffer(BufferVk* vkBuffer, Uint setId, Uint bindingId)
+        void SetUniformBuffer(BufferVk* vkBuffer, IShader::Stage stage, Uint setId, Uint bindingId)
         {
-            return SetBuffer<true>(vkBuffer, setId, bindingId);
+            return SetBuffer<true>(vkBuffer, stage, setId, bindingId);
         }
 
         PipelineLayoutVk* GetPipelineLayout(const DeviceData& deviceData);
 
     protected:
         template<Bool bWriteEnable>
-        void SetTexture(TextureVk* vkTexture, Uint setId, Uint bindingId)
+        void SetTexture(TextureVk* vkTexture, IShader::Stage stage, Uint setId, Uint bindingId)
         {
-            Dirty(dsWriter[setId].WriteImage<bWriteEnable>(vkTexture->ImageViewHandle(), vkTexture->SamplerHandle(), bindingId), setId);
+            Dirty(dsWriter[setId].WriteImage<bWriteEnable>(vkTexture->ImageViewHandle(), stage, vkTexture->SamplerHandle(), bindingId), setId);
         }
 
         template<Bool bUniform>
-        void SetBuffer(BufferVk* vkBuffer, Uint setId, Uint bindingId)
+        void SetBuffer(BufferVk* vkBuffer, IShader::Stage stage, Uint setId, Uint bindingId)
         {
-            Dirty(dsWriter[setId].WriteBuffer<bUniform>(vkBuffer->BufferHandle(), 0, vkBuffer->GetSize(), bindingId), setId);
+            Dirty(dsWriter[setId].WriteBuffer<bUniform>(vkBuffer->BufferHandle(), stage, 0, vkBuffer->GetSize(), bindingId), setId);
         }
 
         void Dirty(Bool bDirty, Uint index)
