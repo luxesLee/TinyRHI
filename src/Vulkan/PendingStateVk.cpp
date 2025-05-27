@@ -8,9 +8,24 @@ PipelineLayoutVk* PendingStateVk::GetPipelineLayout(const DeviceData& deviceData
 {
     Uint32 hashResult = 0;
     std::vector<DescriptorSetLayoutVk> dsLayouts;
+
+    auto hashDSLayout = [&](const DescriptorSetLayoutBindingDescArray& layoutBindings)
+    {
+        Uint32 result = 0;
+        for(const auto& layoutBinding : layoutBindings)
+        {
+            result ^= std::hash<Uint32>{}(layoutBinding.binding);
+            result ^= std::hash<Uint32>{}(static_cast<Uint32>(layoutBinding.type));
+            result ^= std::hash<Uint32>{}(static_cast<Uint32>(layoutBinding.flag));
+        }
+        return result;
+    };
+
     for(Uint i = 0; i < MaxDescriptorSetCount && writerDirty[i]; i++)
     {
-        dsLayouts.push_back(DescriptorSetLayoutVk(deviceData, dsWriter[i].GetDSLayoutBindingArray()));
+        auto dsLayoutBindingArr = dsWriter[i].GetDSLayoutBindingArray();
+        dsLayouts.push_back(DescriptorSetLayoutVk(deviceData, dsLayoutBindingArr));
+        hashResult ^= hashDSLayout(dsLayoutBindingArr) << i;
     }
 
     auto& pipelineLayout = pipelineLayoutCache[hashResult];
@@ -97,8 +112,8 @@ void ComputePendingStateVk::PrepareDispatch()
         {
             if(writerDirty[dsWriterIndex])
             {
-                // dsWriter[dsWriterIndex].BindDescriptor(dsArray[dsWriterIndex]);
-                // dsWriter[dsWriterIndex].Update();
+				dsWriter[dsWriterIndex].BindDescriptor(*dsArray[dsWriterIndex]);
+				dsWriter[dsWriterIndex].Update(deviceData.logicalDevice);
             }
         }
 

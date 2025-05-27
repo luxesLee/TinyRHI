@@ -205,21 +205,18 @@ int main()
         pHandle->
             BeginFrame()->
                 BeginCommand()->
-                    // Attachment need to be set before renderPassBegin to get renderPass and framebuffer
                     SetDefaultAttachments(attachmentDesc)->
                     UpdateBuffer(pUniformBuffer, &ubo, sizeof(ubo), 0)->
-                    // SetDepthAttachment()->
                     BeginRenderPass()->
                         SetVertexShader(vertShader)->
                         SetPixelShader(pixelShader)->
-                        // Buffer Texture need be set before setpipeline to get pipelineLayout
 			            SetUniformBuffer(pUniformBuffer, TinyRHI::IShader::Stage::Vertex, 0, 0)->
 			            SetSamplerTexture(pSamplerTex, TinyRHI::IShader::Stage::Pixel, 0, 1)->
                         SetGraphicsPipeline(gfxSetting)->
                         SetViewport(Extent2D(0, 0), Extent2D(1024, 1024))->
                         SetScissor(Extent2D(0, 0), Extent2D(1024, 1024))->
                         SetVertexStream(0, pVeretx, 0)->
-                        DrawIndexPrimitive(pIndex, 0, 0, 0, 0, 0)->
+                        DrawIndexPrimitive(pIndex, 6, 0, 0)->
                     EndRenderPass()->
                 EndCommand()->
                 Commit()->

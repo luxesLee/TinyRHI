@@ -25,6 +25,6 @@ DescriptorSetPoolVk::DescriptorSetPoolVk(
         .setMaxSets(1000)
         .setPoolSizeCount(poolSizes.size())
         .setPPoolSizes(poolSizes.data())
-        .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet);	// �ͷ�poolʱ�Զ��ͷ���Ӧset
+        .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet | vk::DescriptorPoolCreateFlagBits::eUpdateAfterBind);	// �ͷ�poolʱ�Զ��ͷ���Ӧset
     descriptorPool = deviceData.logicalDevice.createDescriptorPoolUnique(poolCreateInfo);
 }

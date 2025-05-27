@@ -68,7 +68,7 @@ namespace TinyRHI
 
 		virtual IRHIHandle* DrawPrimitive(Uint32 vertexCount, Uint32 firstVertex) = 0;
 		virtual IRHIHandle* DrawPrimitiveIndirect(IBuffer* argumentBuffer, Uint32 argumentOffset) = 0;
-		virtual IRHIHandle* DrawIndexPrimitive(IBuffer* indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances) = 0;
+		virtual IRHIHandle* DrawIndexPrimitive(IBuffer *indexBuffer, Uint32 indexCount, Uint32 firstIndex, Int32 vertOffset) = 0;
 		virtual IRHIHandle* Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ) = 0;
 
 		virtual IRHIHandle* UpdateBuffer(IBuffer* buffer, void* data, Uint32 dataSize, Uint32 offset) = 0;

@@ -42,6 +42,7 @@ namespace TinyRHI
 			: layoutBindings(_layoutBindings)
 		{
 			std::vector<vk::DescriptorSetLayoutBinding> dsLayoutBindings(layoutBindings.size());
+			std::vector<vk::DescriptorBindingFlags> bindingFlags(layoutBindings.size());
 			for (Uint32 i = 0; i < layoutBindings.size(); i++)
 			{
 				auto& binding = dsLayoutBindings[i];
@@ -49,11 +50,18 @@ namespace TinyRHI
 					.setDescriptorCount(1)
 					.setDescriptorType(layoutBindings[i].type)
 					.setStageFlags(layoutBindings[i].flag);
+
+				bindingFlags[i] = (vk::DescriptorBindingFlagBits::eUpdateAfterBind);
 			}
+
+			vk::DescriptorSetLayoutBindingFlagsCreateInfo flag = vk::DescriptorSetLayoutBindingFlagsCreateInfo()
+				.setBindingCount(bindingFlags.size()).setBindingFlags(bindingFlags);
 
 			auto dsLayoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
 				.setBindingCount(dsLayoutBindings.size())
-				.setPBindings(dsLayoutBindings.data());
+				.setPBindings(dsLayoutBindings.data())
+				.setFlags(vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool)
+				.setPNext(&flag);
 			descriptorSetLayout = deviceData.logicalDevice.createDescriptorSetLayoutUnique(dsLayoutCreateInfo);
 
 			hashKey = ComputeHash(layoutBindings);
@@ -121,6 +129,7 @@ namespace TinyRHI
 			assert(descriptorSetNum != 0);
 			maxDS = descriptorSetNum;
 			currentDescriptorSet = nullptr;
+			bDirty = false;
 		}
 
 		// offset: 0 default

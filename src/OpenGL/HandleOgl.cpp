@@ -42,7 +42,7 @@ IRHIHandle* TinyRHI::HandleOgl::DrawPrimitiveIndirect(IBuffer *argumentBuffer, U
     return this;
 }
 
-IRHIHandle* TinyRHI::HandleOgl::DrawIndexPrimitive(IBuffer *indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances)
+IRHIHandle* TinyRHI::HandleOgl::DrawIndexPrimitive(IBuffer *indexBuffer, Uint32 indexCount, Uint32 firstIndex, Int32 vertOffset)
 {
     return this;
 }

@@ -154,6 +154,10 @@ void VkHandle::InitDevice()
 	validationLayers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 
+	vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures;
+	descriptorIndexingFeatures.setDescriptorBindingUniformBufferUpdateAfterBind(true)
+		.setDescriptorBindingSampledImageUpdateAfterBind(true);
+
 	auto deviceCreateInfo = vk::DeviceCreateInfo()
 		.setQueueCreateInfoCount((uint32_t)queueCreateInfos.size())
 		.setPQueueCreateInfos(queueCreateInfos.data())
@@ -165,7 +169,8 @@ void VkHandle::InitDevice()
 		.setEnabledLayerCount(0)
 #endif
 		.setEnabledExtensionCount(deviceExtensions.size())
-		.setPpEnabledExtensionNames(deviceExtensions.data());
+		.setPpEnabledExtensionNames(deviceExtensions.data())
+		.setPNext(&descriptorIndexingFeatures);
 
 	deviceData.logicalDevice = deviceData.physicalDevice.createDevice(deviceCreateInfo);
 	deviceData.graphicsQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.graphicsFamilyIndex, 0);
@@ -643,7 +648,7 @@ IRHIHandle* VkHandle::DrawPrimitiveIndirect(IBuffer *argumentBuffer, Uint32 argu
 	return this;
 }
 
-IRHIHandle* VkHandle::DrawIndexPrimitive(IBuffer *indexBuffer, Int32 baseVertexIndex, Uint32 firstInstance, Uint32 startIndex, Uint32 numPrimitives, Uint32 numInstances)
+IRHIHandle* VkHandle::DrawIndexPrimitive(IBuffer *indexBuffer, Uint32 indexCount, Uint32 firstIndex, Int32 vertOffset)
 {
 	pGfxPending->PrepareDraw();
 	BufferVk* vkIndexBuffer = dynamic_cast<BufferVk*>(indexBuffer);
@@ -652,10 +657,10 @@ IRHIHandle* VkHandle::DrawIndexPrimitive(IBuffer *indexBuffer, Int32 baseVertexI
 		currentCmd.bindIndexBuffer(vkIndexBuffer->BufferHandle(), 0, vk::IndexType::eUint16);
 		// #1: index count per instance
 		// #2: instance count
-		// #3: 
+		// #3: first used Index (#3 + #1 <= IndexBuffer Sum)
 		// #4: ignore first #4 num vertices
 		// #5: same #4 but instance
-		currentCmd.drawIndexed(6, 1, 0, 0, 0);
+		currentCmd.drawIndexed(indexCount, 1, firstIndex, vertOffset, 0);
 	}
 	return this;
 }
