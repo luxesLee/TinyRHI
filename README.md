@@ -1,6 +1,16 @@
 # TinyRHI
 Todo: write my own render hardware interface about OpenGL and Vulkan
-== Unfinished, to be developed ==
+
+Unfinished, to be developed
+
+## Processes and Plans
+
+- Current Processes: 
+    Build the basic Vulkan operating framework and run the simple test examples. The project still has many issues and some hard-coded elements.
+
+- Plan:
+  - Replace the hard-coded elements, expand more Vulkan flags, and enhance the overall framework's robustness.
+  - Build the OpenGL code.
 
 ## The Simplest Example
 
