@@ -92,7 +92,7 @@ namespace TinyRHI
 			barrier.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
 
 			srcStage = vk::PipelineStageFlagBits::eTransfer;
-			dstStage = vk::PipelineStageFlagBits::eBottomOfPipe;
+			dstStage = vk::PipelineStageFlagBits::eFragmentShader;
 		}
 		else
 		{
@@ -139,6 +139,10 @@ namespace TinyRHI
 		if (bufferType.bIndirect)
 		{
 			usage |= vk::BufferUsageFlagBits::eIndirectBuffer;
+		}
+		if(bufferType.bTransfer)
+		{
+			usage |= vk::BufferUsageFlagBits::eTransferSrc;
 		}
 		return usage;
 	}
@@ -389,6 +393,8 @@ namespace TinyRHI
 			return vk::Format::eR8G8B8Unorm;
 		case Format::RGBA8_UNORM:
 			return vk::Format::eR8G8B8A8Unorm;
+		case Format::RGBA8_SRGB:
+			return vk::Format::eR8G8B8A8Srgb;
 		case Format::BGRA8_SRGB:
 			return vk::Format::eB8G8R8A8Srgb;
 		case Format::RGBA32_FLOAT:

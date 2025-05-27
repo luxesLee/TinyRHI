@@ -649,9 +649,13 @@ IRHIHandle* VkHandle::DrawIndexPrimitive(IBuffer *indexBuffer, Int32 baseVertexI
 	BufferVk* vkIndexBuffer = dynamic_cast<BufferVk*>(indexBuffer);
 	if(vkIndexBuffer)
 	{
-		currentCmd.bindIndexBuffer(vkIndexBuffer->BufferHandle(), 0, vk::IndexType::eUint32);
-		Uint32 numIndices = 0;
-		currentCmd.drawIndexed(numIndices, numInstances, startIndex, baseVertexIndex, firstInstance);
+		currentCmd.bindIndexBuffer(vkIndexBuffer->BufferHandle(), 0, vk::IndexType::eUint16);
+		// #1: index count per instance
+		// #2: instance count
+		// #3: 
+		// #4: ignore first #4 num vertices
+		// #5: same #4 but instance
+		currentCmd.drawIndexed(6, 1, 0, 0, 0);
 	}
 	return this;
 }

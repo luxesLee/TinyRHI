@@ -43,7 +43,7 @@ elseif(UNIX)
     target_compile_definitions(TinyRHI PRIVATE LINUX_MACRO)
 endif()
 
-# target_compile_definitions(TinyRHI PRIVATE DEBUG_VULKAN_MACRO)
+target_compile_definitions(TinyRHI PRIVATE DEBUG_VULKAN_MACRO)
 
 target_include_directories(TinyRHI PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(TinyRHI PRIVATE ${Vulkan_INCLUDE_DIRS})
@@ -55,6 +55,8 @@ set_target_properties(TinyRHI PROPERTIES
 # Test
 if(TEST_EXAMPLE)
     add_subdirectory(third_party/glfw)
+    add_subdirectory(third_party/tinygltf)
+    add_subdirectory(third_party/glm)
     include(CTest)
     enable_testing()
     add_subdirectory(test)

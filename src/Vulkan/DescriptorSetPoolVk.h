@@ -38,7 +38,7 @@ namespace TinyRHI
 		DescriptorSetLayoutVk() = delete;
 		DescriptorSetLayoutVk(
 			const DeviceData& deviceData,
-			const DescriptorSetLayoutBindingDescArray& _layoutBindings)
+			DescriptorSetLayoutBindingDescArray _layoutBindings)
 			: layoutBindings(_layoutBindings)
 		{
 			std::vector<vk::DescriptorSetLayoutBinding> dsLayoutBindings(layoutBindings.size());
@@ -76,7 +76,7 @@ namespace TinyRHI
 
 	private:
 		vk::UniqueDescriptorSetLayout descriptorSetLayout;
-		const DescriptorSetLayoutBindingDescArray& layoutBindings;
+		DescriptorSetLayoutBindingDescArray layoutBindings;
 		Uint32 hashKey;
 	};
 
@@ -119,7 +119,7 @@ namespace TinyRHI
 		DescriptorSetWriterVk(Uint descriptorSetNum = 8)
 		{
 			assert(descriptorSetNum != 0);
-			writeDescriptorSets.resize(descriptorSetNum);
+			maxDS = descriptorSetNum;
 			currentDescriptorSet = nullptr;
 		}
 
@@ -128,10 +128,9 @@ namespace TinyRHI
 		template <Bool bUniform>
 		Bool WriteBuffer(vk::Buffer buffer, IShader::Stage stage, Uint32 offset, Uint32 range, Uint32 dstBinding)
 		{
-			auto bufferInfo = vk::DescriptorBufferInfo()
-				.setBuffer(buffer)
-				.setOffset(offset)
-				.setRange(range);
+			descriptorBufferInfos.push_back(vk::DescriptorBufferInfo());
+			auto& bufferInfo = descriptorBufferInfos[descriptorBufferInfos.size() - 1];
+			bufferInfo.setBuffer(buffer).setOffset(offset).setRange(range);
 
 			auto writeDescriptorSet = vk::WriteDescriptorSet()
 				.setDstBinding(dstBinding)
@@ -147,6 +146,7 @@ namespace TinyRHI
 				writeDescriptorSet.setDescriptorType(vk::DescriptorType::eStorageBuffer);
 			}
 
+			assert(writeDescriptorSets.size() < maxDS);
 			writeDescriptorSets.push_back(writeDescriptorSet);
 			shaderStages.push_back(ConvertShaderStage(stage));
 			bDirty = true;
@@ -156,9 +156,9 @@ namespace TinyRHI
 		template<Bool bWriteEnable>
 		Bool WriteImage(vk::ImageView imageView, IShader::Stage stage, vk::Sampler sampler, Uint32 dstBinding)
 		{
-			auto imageInfo = vk::DescriptorImageInfo()
-				.setImageView(imageView)
-				.setSampler(sampler);
+			descriptorImageInfos.push_back(vk::DescriptorImageInfo());
+			auto& imageInfo = descriptorImageInfos[descriptorImageInfos.size() - 1];
+			imageInfo.setImageView(imageView).setSampler(sampler);
 
 			auto writeDescriptorSet = vk::WriteDescriptorSet()
 				.setDstBinding(dstBinding)
@@ -176,20 +176,21 @@ namespace TinyRHI
 				writeDescriptorSet.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
 			}
 
+			assert(writeDescriptorSets.size() < maxDS);
 			writeDescriptorSets.push_back(writeDescriptorSet);
 			shaderStages.push_back(ConvertShaderStage(stage));
 			bDirty = true;
 			return true;
 		}
 
-		void BindDescriptor(DescriptorSetVk* vkDescriptorSet)
+		void BindDescriptor(vk::DescriptorSet vkDescriptorSet)
 		{
 			if(vkDescriptorSet != currentDescriptorSet)
 			{
 				currentDescriptorSet = vkDescriptorSet;
 				for (auto& wdSet : writeDescriptorSets)
 				{
-					wdSet.setDstSet(vkDescriptorSet->DescriptorSetHandle());
+					wdSet.setDstSet(currentDescriptorSet);
 				}
 			}
 		}
@@ -226,11 +227,24 @@ namespace TinyRHI
 			return bDirty;
 		}
 
+		void Reset()
+		{
+			currentDescriptorSet = vk::DescriptorSet();
+			writeDescriptorSets.clear();
+			shaderStages.clear();
+			descriptorBufferInfos.clear();
+			descriptorImageInfos.clear();
+			bDirty = false;
+		}
+
 	private:
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		std::vector<vk::ShaderStageFlags> shaderStages;
-		DescriptorSetVk* currentDescriptorSet;
+		std::vector<vk::DescriptorBufferInfo> descriptorBufferInfos;
+		std::vector<vk::DescriptorImageInfo> descriptorImageInfos;
+		vk::DescriptorSet currentDescriptorSet;
 		Bool bDirty;
+		Uint maxDS;
 	};
 
 	/*

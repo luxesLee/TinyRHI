@@ -16,7 +16,6 @@ PipelineLayoutVk* PendingStateVk::GetPipelineLayout(const DeviceData& deviceData
     auto& pipelineLayout = pipelineLayoutCache[hashResult];
     if(!pipelineLayout)
     {
-
         pipelineLayout = std::make_unique<PipelineLayoutVk>(deviceData, dsLayouts);
     }
     return pipelineLayout.get();
@@ -34,8 +33,8 @@ void GfxPendingStateVk::PrepareDraw()
         {
             if(writerDirty[dsWriterIndex])
             {
-                // dsWriter[dsWriterIndex].BindDescriptor(dsArray[dsWriterIndex]);
-                // dsWriter[dsWriterIndex].Update();
+				dsWriter[dsWriterIndex].BindDescriptor(*dsArray[dsWriterIndex]);
+				dsWriter[dsWriterIndex].Update(deviceData.logicalDevice);
             }
         }
 

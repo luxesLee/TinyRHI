@@ -18,7 +18,7 @@ ImageVk::ImageVk(
         .setFormat(ConvertFormat(imageDesc.format))
         .setInitialLayout(vk::ImageLayout::eUndefined)
         .setUsage(imageDesc.bStaging ? 
-            vk::ImageUsageFlagBits::eTransferSrc | usage : 
+            vk::ImageUsageFlagBits::eTransferDst | usage : 
             usage)
         .setSharingMode(vk::SharingMode::eExclusive)
         .setSamples(ConvertMSAASamples(imageDesc.samples))
@@ -67,13 +67,16 @@ void ImageVk::SetImageData(void *data, Uint32 dataSize)
             .bStaging = false,
         };
         std::unique_ptr<BufferVk> stagingBuffer = std::make_unique<BufferVk>(deviceData, bufferDesc);
+        stagingBuffer->SetBufferData(data, dataSize, 0);
 
-        auto subresource = vk::ImageSubresource()
-            .setMipLevel(imageDesc.imageViewDesc.mipLevelsCount)
-            .setArrayLayer(imageDesc.imageViewDesc.arrayLayersCount)
+        auto subresource = vk::ImageSubresourceLayers()
+            .setMipLevel(0)
+            .setBaseArrayLayer(imageDesc.imageViewDesc.baseArrayLayer)
+            .setLayerCount(imageDesc.imageViewDesc.arrayLayersCount)
             .setAspectMask(imageDesc.bDepth ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor);
 
         vk::BufferImageCopy region = vk::BufferImageCopy()
+            .setImageSubresource(subresource)
             .setBufferOffset(0)
             .setBufferRowLength(0)
             .setBufferImageHeight(0)

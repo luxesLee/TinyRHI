@@ -17,8 +17,8 @@ namespace TinyRHI
 			std::vector<vk::DescriptorSetLayout> descriptorSetLayouts(_vkDescriptorSetLayouts.size());
 			for (Uint32 i = 0; i < _vkDescriptorSetLayouts.size(); i++)
 			{
-				vkDescriptorSetLayouts.push_back(std::move(_vkDescriptorSetLayouts[i]));
 				descriptorSetLayouts[i] = _vkDescriptorSetLayouts[i].DSLayoutHandle();
+				vkDescriptorSetLayouts.push_back(std::move(_vkDescriptorSetLayouts[i]));
 			}
 
 			auto pipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo()

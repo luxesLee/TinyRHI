@@ -34,6 +34,7 @@ namespace TinyRHI
 				.setAddressModeV(addressMode)
 				.setAddressModeW(addressMode)
 				.setAnisotropyEnable(samplerState.anisotropyEnable)
+				.setMaxAnisotropy(16)
 				.setCompareEnable(samplerState.compareEnable)
 				.setCompareOp(ConvertCompOp(samplerState.compOp))
 				.setMinFilter(filterType)

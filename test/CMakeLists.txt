@@ -1,4 +1,4 @@
-
+# Shader
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test)
 message("CMAKE_RUNTIME_OUTPUT_DIRECTORY: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
@@ -36,16 +36,21 @@ if(GLSLANG_VALIDATOR)
     endforeach()
 
     # 创建一个 custom target，确保着色器文件被编译
-    add_custom_target(test_min_example_shader ALL DEPENDS ${SPIRV_FILES})
+    add_custom_target(test_example_shader ALL DEPENDS ${SPIRV_FILES})
 else()
     message(FATAL_ERROR "glslangValidator not found!")
 endif()
+
+# Texture
+set(TEXTURE_SRC_DIRECTORY ${CMAKE_SOURCE_DIR}/res)
+set(TEXTURES_DST_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+file(COPY ${TEXTURE_SRC_DIRECTORY} DESTINATION ${TEXTURES_DST_DIRECTORY})
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(TinyRHI-min-example TinyRHI_min_example.cpp)
-add_dependencies(TinyRHI-min-example test_min_example_shader)
+add_dependencies(TinyRHI-min-example test_example_shader)
 
 target_link_libraries(TinyRHI-min-example PRIVATE TinyRHI)
 
@@ -55,3 +60,23 @@ set(GLFW_BUILD_EXAMPLES OFF)
 target_link_libraries(TinyRHI-min-example PUBLIC glfw)
 
 add_test(NAME TinyRHITest COMMAND TinyRHI-min-example)
+
+
+add_executable(TinyRHI-ImageSampler-example TinyRHI_imageSampler_example.cpp)
+add_dependencies(TinyRHI-ImageSampler-example test_example_shader)
+
+target_link_libraries(TinyRHI-ImageSampler-example PRIVATE TinyRHI)
+
+set(GLFW_BUILD_DOCS OFF)
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_BUILD_EXAMPLES OFF)
+target_link_libraries(TinyRHI-ImageSampler-example PUBLIC glfw)
+
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF)
+set(TINYGLTF_INSTALL OFF)
+set(TINYGLTF_INSTALL_VENDOR OFF)
+target_link_libraries(TinyRHI-ImageSampler-example PUBLIC tinygltf)
+
+target_link_libraries(TinyRHI-ImageSampler-example PUBLIC glm)
+
+add_test(NAME TinyRHITest2 COMMAND TinyRHI-ImageSampler-example)

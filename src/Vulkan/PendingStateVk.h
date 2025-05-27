@@ -13,8 +13,10 @@ namespace TinyRHI
     class PendingStateVk
     {
     public:
-        PendingStateVk()
+        PendingStateVk(const DeviceData& _deviceData)
+            : deviceData(_deviceData)
         {
+            dsPool = std::make_unique<DescriptorSetPoolVk>(_deviceData);
             for(Uint i = 0; i < MaxDescriptorSetCount; i++)
             {
                 writerDirty[i] = false;
@@ -69,6 +71,15 @@ namespace TinyRHI
             }
         }
 
+        void Reset()
+        {
+            for (Uint i = 0; i < MaxDescriptorSetCount && writerDirty[i]; i++)
+            {
+                dsWriter[i].Reset();
+                writerDirty[i] = false;
+            }
+        }
+
     protected:
         vk::CommandBuffer currentCmdBuffer;
 
@@ -78,6 +89,8 @@ namespace TinyRHI
 
         vk::DescriptorSet* dsArray[MaxDescriptorSetCount];
         Uint dsNum;
+
+        const DeviceData& deviceData;
         std::unique_ptr<DescriptorSetPoolVk> dsPool;
 
         std::unordered_map<Uint32, std::unique_ptr<PipelineLayoutVk>> pipelineLayoutCache;
@@ -86,7 +99,8 @@ namespace TinyRHI
     class GfxPendingStateVk : public PendingStateVk
     {
     public:
-        GfxPendingStateVk()
+        GfxPendingStateVk(const DeviceData& _deviceData)
+            : PendingStateVk(_deviceData)
         {
             Reset();
         }
@@ -96,6 +110,7 @@ namespace TinyRHI
 
         void Reset()
         {
+            PendingStateVk::Reset();
             viewport = vk::Viewport();
             bViewportDirty = true;
 
@@ -201,7 +216,8 @@ namespace TinyRHI
     class ComputePendingStateVk : public PendingStateVk
     {
     public:
-        ComputePendingStateVk()
+        ComputePendingStateVk(const DeviceData& _deviceData)
+            : PendingStateVk(_deviceData)
         {
         }
         ~ComputePendingStateVk()

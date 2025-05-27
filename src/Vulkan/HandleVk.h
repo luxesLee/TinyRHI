@@ -31,8 +31,8 @@ namespace TinyRHI
 		void InitSync();
 		void InitPendingState()
 		{
-			pGfxPending = std::make_unique<GfxPendingStateVk>();
-			pComputePending = std::make_unique<ComputePendingStateVk>();
+			pGfxPending = std::make_unique<GfxPendingStateVk>(deviceData);
+			pComputePending = std::make_unique<ComputePendingStateVk>(deviceData);
 			renderResManager = std::make_unique<RenderResourceVkManager>(deviceData);
 		}
 
