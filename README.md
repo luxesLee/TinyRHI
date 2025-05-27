@@ -1,7 +1,6 @@
 # TinyRHI
 Todo: write my own render hardware interface about OpenGL and Vulkan
-
-== Still continuing to write(unfinished) ==
+== Unfinished, to be developed ==
 
 ## The Simplest Example
 
@@ -21,7 +20,7 @@ Todo: write my own render hardware interface about OpenGL and Vulkan
                         SetPixelShader(pixelShader)->
                         // Buffer Texture need be set before setpipeline to get pipelineLayout
                         SetGraphicsPipeline(gfxSetting)->
-                        SetViewport(Extent3D(0, 0, 0), Extent3D(1024, 1024, 0))->
+                        SetViewport(Extent2D(0, 0), Extent2D(1024, 1024))->
                         SetScissor(Extent2D(0, 0), Extent2D(1024, 1024))->
                         SetVertexStream(0, pVeretx, 0)->
                         DrawPrimitive(3, 0)->
@@ -32,4 +31,4 @@ Todo: write my own render hardware interface about OpenGL and Vulkan
     }
 ```
 
-See in 'test/TinyRHI_min_example.cpp'
+See and run 'test/TinyRHI_min_example.cpp'
