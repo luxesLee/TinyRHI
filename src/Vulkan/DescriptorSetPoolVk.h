@@ -130,6 +130,9 @@ namespace TinyRHI
 			maxDS = descriptorSetNum;
 			currentDescriptorSet = nullptr;
 			bDirty = false;
+			writeDescriptorSets.reserve(20);
+			descriptorBufferInfos.reserve(20);
+			descriptorImageInfos.reserve(20);
 		}
 
 		// offset: 0 default
@@ -137,15 +140,18 @@ namespace TinyRHI
 		template <Bool bUniform>
 		Bool WriteBuffer(vk::Buffer buffer, IShader::Stage stage, Uint32 offset, Uint32 range, Uint32 dstBinding)
 		{
-			descriptorBufferInfos.push_back(vk::DescriptorBufferInfo());
-			auto& bufferInfo = descriptorBufferInfos[descriptorBufferInfos.size() - 1];
-			bufferInfo.setBuffer(buffer).setOffset(offset).setRange(range);
+			writeDescriptorSets.emplace_back();
+			descriptorBufferInfos.emplace_back();
+			shaderStages.push_back(ConvertShaderStage(stage));
+			assert(writeDescriptorSets.size() < maxDS);
 
-			auto writeDescriptorSet = vk::WriteDescriptorSet()
-				.setDstBinding(dstBinding)
+			auto& writeDescriptorSet = writeDescriptorSets.back();
+			auto& bufferInfo = descriptorBufferInfos.back();
+
+			bufferInfo.setBuffer(buffer).setOffset(offset).setRange(range);
+			writeDescriptorSet.setDstBinding(dstBinding)
 				.setDescriptorCount(1)
 				.setPBufferInfo(&bufferInfo);
-
 			if (bUniform)
 			{
 				writeDescriptorSet.setDescriptorType(vk::DescriptorType::eUniformBuffer);
@@ -155,9 +161,6 @@ namespace TinyRHI
 				writeDescriptorSet.setDescriptorType(vk::DescriptorType::eStorageBuffer);
 			}
 
-			assert(writeDescriptorSets.size() < maxDS);
-			writeDescriptorSets.push_back(writeDescriptorSet);
-			shaderStages.push_back(ConvertShaderStage(stage));
 			bDirty = true;
 			return true;
 		}
@@ -165,15 +168,16 @@ namespace TinyRHI
 		template<Bool bWriteEnable>
 		Bool WriteImage(vk::ImageView imageView, IShader::Stage stage, vk::Sampler sampler, Uint32 dstBinding)
 		{
-			descriptorImageInfos.push_back(vk::DescriptorImageInfo());
-			auto& imageInfo = descriptorImageInfos[descriptorImageInfos.size() - 1];
+			writeDescriptorSets.emplace_back();
+			descriptorImageInfos.emplace_back();
+			shaderStages.push_back(ConvertShaderStage(stage));
+			assert(writeDescriptorSets.size() < maxDS);
+
+			auto& writeDescriptorSet = writeDescriptorSets.back();
+			auto& imageInfo = descriptorImageInfos.back();
+
 			imageInfo.setImageView(imageView).setSampler(sampler);
-
-			auto writeDescriptorSet = vk::WriteDescriptorSet()
-				.setDstBinding(dstBinding)
-				.setDescriptorCount(1)
-				.setPImageInfo(&imageInfo);
-
+			writeDescriptorSet.setDstBinding(dstBinding).setDescriptorCount(1).setPImageInfo(&imageInfo);
 			if (bWriteEnable)
 			{
 				imageInfo.setImageLayout(vk::ImageLayout::eGeneral);
@@ -184,10 +188,7 @@ namespace TinyRHI
 				imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
 				writeDescriptorSet.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
 			}
-
-			assert(writeDescriptorSets.size() < maxDS);
-			writeDescriptorSets.push_back(writeDescriptorSet);
-			shaderStages.push_back(ConvertShaderStage(stage));
+			
 			bDirty = true;
 			return true;
 		}

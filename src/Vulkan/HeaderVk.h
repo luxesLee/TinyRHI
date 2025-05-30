@@ -19,11 +19,13 @@ namespace TinyRHI
 
 			vk::Queue graphicsQueue = VK_NULL_HANDLE;
 			vk::Queue presentQueue = VK_NULL_HANDLE;
+			vk::Queue computeQueue = VK_NULL_HANDLE;
 
 			struct QueueFamilyIndices
 			{
 				uint32_t graphicsFamilyIndex;
 				uint32_t presentFamilyIndex;
+				uint32_t computeFamilyIndex;
 			} queueFamilyIndices;
 
 			vk::CommandPool commandPool = VK_NULL_HANDLE;

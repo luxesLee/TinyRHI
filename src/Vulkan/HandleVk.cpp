@@ -105,6 +105,7 @@ void VkHandle::InitDevice()
 {
 	deviceData.queueFamilyIndices.graphicsFamilyIndex = -1;
 	deviceData.queueFamilyIndices.presentFamilyIndex = -1;
+	deviceData.queueFamilyIndices.computeFamilyIndex = -1;
 	std::vector<vk::QueueFamilyProperties> queueFamilies = deviceData.physicalDevice.getQueueFamilyProperties();
 	for (uint32_t index = 0; index < queueFamilies.size(); index++)
 	{
@@ -121,14 +122,23 @@ void VkHandle::InitDevice()
 		{
 			deviceData.queueFamilyIndices.presentFamilyIndex = index;
 		}
+
+		if (queueFamilies[index].queueFlags & vk::QueueFlagBits::eCompute 
+			&& queueFamilies[index].queueCount > 0
+			&& deviceData.queueFamilyIndices.computeFamilyIndex == Uint32(-1))
+		{
+			deviceData.queueFamilyIndices.computeFamilyIndex = index;
+		}
 	}
 	assert(deviceData.queueFamilyIndices.graphicsFamilyIndex != Uint32(-1));
 	assert(deviceData.queueFamilyIndices.presentFamilyIndex != Uint32(-1));
+	assert(deviceData.queueFamilyIndices.computeFamilyIndex != Uint32(-1));
 
 	std::set<Uint32> uniqueQueueFamilyIndices =
 	{
 		deviceData.queueFamilyIndices.graphicsFamilyIndex,
-		deviceData.queueFamilyIndices.presentFamilyIndex
+		deviceData.queueFamilyIndices.presentFamilyIndex,
+		deviceData.queueFamilyIndices.computeFamilyIndex
 	};
 	std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 	float queuePriority = 1.0f;
@@ -155,8 +165,10 @@ void VkHandle::InitDevice()
 #endif
 
 	vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures;
-	descriptorIndexingFeatures.setDescriptorBindingUniformBufferUpdateAfterBind(true)
-		.setDescriptorBindingSampledImageUpdateAfterBind(true);
+	descriptorIndexingFeatures
+		.setDescriptorBindingUniformBufferUpdateAfterBind(true)
+		.setDescriptorBindingSampledImageUpdateAfterBind(true)
+		.setDescriptorBindingStorageBufferUpdateAfterBind(true);
 
 	auto deviceCreateInfo = vk::DeviceCreateInfo()
 		.setQueueCreateInfoCount((uint32_t)queueCreateInfos.size())
@@ -175,6 +187,7 @@ void VkHandle::InitDevice()
 	deviceData.logicalDevice = deviceData.physicalDevice.createDevice(deviceCreateInfo);
 	deviceData.graphicsQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.graphicsFamilyIndex, 0);
 	deviceData.presentQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.presentFamilyIndex, 0);
+	deviceData.computeQueue = deviceData.logicalDevice.getQueue(deviceData.queueFamilyIndices.computeFamilyIndex, 0);
 }
 
 void VkHandle::InitSwapChain()
@@ -262,6 +275,7 @@ void VkHandle::InitSwapChain()
 	{
 		swapImageViews.push_back(std::make_unique<ImageViewVk>(deviceData, imageDesc, swapImages[i]));
 	}
+	swapImageIndex = -1;
 }
 
 void VkHandle::InitSync()
@@ -368,71 +382,70 @@ Uint32 VkHandle::GetUsedVRAM() const
 
 IRHIHandle* VkHandle::BeginFrame()
 {
-	vk::Result waitFenceResult = deviceData.logicalDevice.waitForFences(inFlightFences[currentFrame].get(), true, UINT64_MAX);
-
-	vk::ResultValue result = deviceData.logicalDevice.acquireNextImageKHR(
-		swapChain.get(), UINT64_MAX, swapImageAvailableSemaphores[currentFrame].get(), nullptr);
-	swapImageIndex = result.value;
-
-	deviceData.logicalDevice.resetFences(inFlightFences[currentFrame].get());
 	return this;
 }
 
 IRHIHandle* VkHandle::EndFrame()
 {
-	vk::PresentInfoKHR presentInfo = vk::PresentInfoKHR()
-		.setSwapchainCount(1)
-		.setPSwapchains(&swapChain.get())
-		.setPImageIndices(&swapImageIndex)
-		.setWaitSemaphoreCount(1)
-		.setPWaitSemaphores(&renderFinishedSemaphores[currentFrame].get())
-		;
-	
-	auto result = deviceData.presentQueue.presentKHR(presentInfo);
-	assert(result == vk::Result::eSuccess);
-	swapImageIndex = -1;
+	if (swapImageIndex != -1)
+	{
+		vk::PresentInfoKHR presentInfo = vk::PresentInfoKHR()
+			.setSwapchainCount(1)
+			.setPSwapchains(&swapChain.get())
+			.setPImageIndices(&swapImageIndex)
+			.setWaitSemaphoreCount(1)
+			.setPWaitSemaphores(&renderFinishedSemaphores[currentFrame].get())
+			;
+		auto result = deviceData.presentQueue.presentKHR(presentInfo);
+		assert(result == vk::Result::eSuccess);
+
+		swapImageIndex = -1;
+	}
+
 	currentFrame = (currentFrame + 1) % 2;
 	return this;
 }
 
 IRHIHandle* VkHandle::BeginCommand()
 {
-	// todo: Multi-threaded command
-	currentCmd = cmdPoolManager->GetCmdBuffer(currentFrame);
-	currentCmd.reset();
-	currentCmd.begin(vk::CommandBufferBeginInfo());
+	currentVkCmd = cmdPoolManager->GetCmdBuffer();
+	currentVkCmd->BeginCommand();
+
 	renderResManager->ClearAttachments();
 	return this;
 }
 
 IRHIHandle* VkHandle::EndCommand()
 {
-	currentCmd.end();
-	currentCmd = VK_NULL_HANDLE;
+	currentVkCmd->EndCommand();
 	return this;
 }
 
 IRHIHandle* VkHandle::Commit()
 {
-	cmdPoolManager->SubmitCmdBuffer(
-		currentFrame,
-		{swapImageAvailableSemaphores[currentFrame].get()},
-		{renderFinishedSemaphores[currentFrame].get()},
-		vk::PipelineStageFlagBits::eColorAttachmentOutput,
-		inFlightFences[currentFrame].get());
+	if(bCurrentGfx)
+	{
+		cmdPoolManager->SubmitCmdBuffer(currentVkCmd, deviceData.graphicsQueue);
+		pGfxPending->Reset();
+	}
+	else
+	{
+		cmdPoolManager->SubmitCmdBuffer(currentVkCmd, deviceData.computeQueue);
+		pComputePending->Reset();
+	}
+	
 	return this;
 }
 
 IRHIHandle* VkHandle::BeginRenderPass()
 {
-	renderResManager->BeginRenderPass(currentCmd);
+	renderResManager->BeginRenderPass(currentVkCmd->Get());
 	return this;
 }
 
 IRHIHandle* VkHandle::EndRenderPass()
 {
-	renderResManager->EndRenderPass(currentCmd);
-	pGfxPending->Reset();
+	renderResManager->EndRenderPass(currentVkCmd->Get());
 	return this;
 }
 
@@ -445,7 +458,7 @@ IRHIHandle* VkHandle::SetGraphicsPipeline(const GfxSetting& gfxSetting)
 		if(pGfxPending->SetPipeline(vkGfxPipeline))
 		{
 			bCurrentGfx = true;
-			pGfxPending->SetCmdBuffer(currentCmd);
+			pGfxPending->SetCmdBuffer(currentVkCmd->Get());
 			pGfxPending->Bind();
 			pGfxPending->MarkUpdateDynamicStates();
 		}
@@ -462,8 +475,8 @@ IRHIHandle* VkHandle::SetComputePipeline()
 		if(pComputePending->SetPipeline(vkComputePipeline))
 		{
 			bCurrentGfx = false;
+			pComputePending->SetCmdBuffer(currentVkCmd->Get());
 			pComputePending->Bind();
-			pComputePending->SetCmdBuffer(currentCmd);
 		}
 	}
 	return this;
@@ -471,8 +484,16 @@ IRHIHandle* VkHandle::SetComputePipeline()
 
 IRHIHandle* VkHandle::SetDefaultAttachments(const AttachmentDesc &attachmentDesc)
 {
+	vk::ResultValue result = deviceData.logicalDevice.acquireNextImageKHR(
+		swapChain.get(), UINT64_MAX, swapImageAvailableSemaphores[currentFrame].get(), nullptr);
+	swapImageIndex = result.value;
+
 	std::shared_ptr<AttachmentVk> colorAttach = std::make_shared<AttachmentVk>(swapImageViews[currentFrame].get(), attachmentDesc, false);
 	renderResManager->SetColorAttachments(colorAttach);
+
+	currentVkCmd->AddWaitSemaphore(swapImageAvailableSemaphores[currentFrame].get());
+	currentVkCmd->AddSignalSemaphore(renderFinishedSemaphores[currentFrame].get());
+	currentVkCmd->AddWaitStage(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     return this;
 }
 
@@ -563,13 +584,13 @@ IRHIHandle* VkHandle::SetSamplerTexture(ITexture *texture, IShader::Stage stage,
 	TextureVk* vkTexture = dynamic_cast<TextureVk*>(texture);
 	if(vkTexture)
 	{
-		if(bCurrentGfx)
+		if(stage == IShader::Stage::Compute)
 		{
-			pGfxPending->SetSamplerImage(vkTexture, stage, setId, bindingId);
+			pComputePending->SetSamplerImage(vkTexture, stage, setId, bindingId);
 		}
 		else
 		{
-			pComputePending->SetSamplerImage(vkTexture, stage, setId, bindingId);
+			pGfxPending->SetSamplerImage(vkTexture, stage, setId, bindingId);
 		}
 	}
 	return this;
@@ -580,13 +601,13 @@ IRHIHandle* VkHandle::SetStorageTexture(ITexture *texture, IShader::Stage stage,
 	TextureVk* vkTexture = dynamic_cast<TextureVk*>(texture);
 	if(vkTexture)
 	{
-		if(bCurrentGfx)
+		if(stage == IShader::Stage::Compute)
 		{
-			pGfxPending->SetStorageImage(vkTexture, stage, setId, bindingId);
+			pComputePending->SetStorageImage(vkTexture, stage, setId, bindingId);
 		}
 		else
 		{
-			pComputePending->SetStorageImage(vkTexture, stage, setId, bindingId);
+			pGfxPending->SetStorageImage(vkTexture, stage, setId, bindingId);
 		}
 	}
 	return this;
@@ -597,13 +618,13 @@ IRHIHandle* VkHandle::SetStorageBuffer(IBuffer *buffer, IShader::Stage stage, Ui
 	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
 	if(vkBuffer)
 	{
-		if(bCurrentGfx)
+		if(stage == IShader::Stage::Compute)
 		{
-			pGfxPending->SetStorageBuffer(vkBuffer, stage, setId, bindingId);
+			pComputePending->SetStorageBuffer(vkBuffer, stage, setId, bindingId);
 		}
 		else
 		{
-			pComputePending->SetStorageBuffer(vkBuffer, stage, setId, bindingId);
+			pGfxPending->SetStorageBuffer(vkBuffer, stage, setId, bindingId);
 		}
 	}
 	return this;
@@ -614,13 +635,13 @@ IRHIHandle* VkHandle::SetUniformBuffer(IBuffer *buffer, IShader::Stage stage, Ui
 	BufferVk* vkBuffer = dynamic_cast<BufferVk*>(buffer);
 	if(vkBuffer)
 	{
-		if(bCurrentGfx)
+		if(stage == IShader::Stage::Compute)
 		{
-			pGfxPending->SetUniformBuffer(vkBuffer, stage, setId, bindingId);
+			pComputePending->SetUniformBuffer(vkBuffer, stage, setId, bindingId);
 		}
 		else
 		{
-			pComputePending->SetUniformBuffer(vkBuffer, stage, setId, bindingId);
+			pGfxPending->SetUniformBuffer(vkBuffer, stage, setId, bindingId);
 		}
 	}
 	return this;
@@ -633,7 +654,7 @@ IRHIHandle* VkHandle::DrawPrimitive(Uint32 vertexCount, Uint32 firstVertex)
 	// #2: instance count
 	// #3: ignore first #3 num vertices
 	// #4: same #3 but instance
-	currentCmd.draw(vertexCount, 1, firstVertex, 0);
+	currentVkCmd->Get().draw(vertexCount, 1, firstVertex, 0);
 	return this;
 }
 
@@ -643,7 +664,7 @@ IRHIHandle* VkHandle::DrawPrimitiveIndirect(IBuffer *argumentBuffer, Uint32 argu
 	BufferVk* vkArgumentBuffer = dynamic_cast<BufferVk*>(argumentBuffer);
 	if(vkArgumentBuffer)
 	{
-		currentCmd.drawIndirect(vkArgumentBuffer->BufferHandle(), 0, 1, sizeof(vk::DrawIndirectCommand));
+		currentVkCmd->Get().drawIndirect(vkArgumentBuffer->BufferHandle(), 0, 1, sizeof(vk::DrawIndirectCommand));
 	}
 	return this;
 }
@@ -654,13 +675,14 @@ IRHIHandle* VkHandle::DrawIndexPrimitive(IBuffer *indexBuffer, Uint32 indexCount
 	BufferVk* vkIndexBuffer = dynamic_cast<BufferVk*>(indexBuffer);
 	if(vkIndexBuffer)
 	{
-		currentCmd.bindIndexBuffer(vkIndexBuffer->BufferHandle(), 0, vk::IndexType::eUint16);
 		// #1: index count per instance
 		// #2: instance count
 		// #3: first used Index (#3 + #1 <= IndexBuffer Sum)
 		// #4: ignore first #4 num vertices
 		// #5: same #4 but instance
-		currentCmd.drawIndexed(indexCount, 1, firstIndex, vertOffset, 0);
+
+		currentVkCmd->Get().bindIndexBuffer(vkIndexBuffer->BufferHandle(), 0, vk::IndexType::eUint16);
+		currentVkCmd->Get().drawIndexed(indexCount, 1, firstIndex, vertOffset, 0);
 	}
 	return this;
 }
@@ -668,7 +690,7 @@ IRHIHandle* VkHandle::DrawIndexPrimitive(IBuffer *indexBuffer, Uint32 indexCount
 IRHIHandle* VkHandle::Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ)
 {
 	pComputePending->PrepareDispatch();
-	currentCmd.dispatch(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
+	currentVkCmd->Get().dispatch(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
 	return this;
 }
 

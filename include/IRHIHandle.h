@@ -8,6 +8,7 @@
 #include "IRenderPass.h"
 #include "IPipeline.h"
 #include "IFramebuffer.h"
+#include "ITransition.h"
 
 namespace TinyRHI
 {
@@ -47,6 +48,8 @@ namespace TinyRHI
 
 		virtual IRHIHandle* SetGraphicsPipeline(const GfxSetting& gfxSetting) = 0;
 		virtual IRHIHandle* SetComputePipeline() = 0;
+
+		virtual IRHIHandle* SetTransition(ITransition* trans) = 0;
 
 		virtual IRHIHandle* SetDefaultAttachments(const AttachmentDesc &attachmentDesc) = 0;
 		virtual IRHIHandle* SetColorAttachments(ITexture* texture, const AttachmentDesc& attachmentDesc) = 0;

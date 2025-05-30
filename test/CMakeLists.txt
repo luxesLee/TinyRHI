@@ -11,7 +11,7 @@ set(SPIRV_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shader/spirv)
 message("SPIRV_DIR: ${SPIRV_DIR}")
 
 if(GLSLANG_VALIDATOR)
-    file(GLOB GLSL_SOURCES "${SHADER_DIR}/*.vert" "${SHADER_DIR}/*.frag")
+    file(GLOB GLSL_SOURCES "${SHADER_DIR}/*.vert" "${SHADER_DIR}/*.frag" "${SHADER_DIR}/*.comp")
 
     # foreach(file ${GLSL_SOURCES})
     #     message("Found shader: ${file}")
@@ -49,34 +49,33 @@ file(COPY ${TEXTURE_SRC_DIRECTORY} DESTINATION ${TEXTURES_DST_DIRECTORY})
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(TinyRHI-min-example TinyRHI_min_example.cpp)
-add_dependencies(TinyRHI-min-example test_example_shader)
-
-target_link_libraries(TinyRHI-min-example PRIVATE TinyRHI)
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF)
+set(TINYGLTF_INSTALL OFF)
+set(TINYGLTF_INSTALL_VENDOR OFF)
 
 set(GLFW_BUILD_DOCS OFF)
 set(GLFW_BUILD_TESTS OFF)
 set(GLFW_BUILD_EXAMPLES OFF)
-target_link_libraries(TinyRHI-min-example PUBLIC glfw)
 
+add_executable(TinyRHI-min-example TinyRHI_min_example.cpp)
+add_dependencies(TinyRHI-min-example test_example_shader)
+target_link_libraries(TinyRHI-min-example PRIVATE TinyRHI)
+target_link_libraries(TinyRHI-min-example PUBLIC glfw)
 add_test(NAME TinyRHITest COMMAND TinyRHI-min-example)
 
 
 add_executable(TinyRHI-ImageSampler-example TinyRHI_imageSampler_example.cpp)
 add_dependencies(TinyRHI-ImageSampler-example test_example_shader)
-
 target_link_libraries(TinyRHI-ImageSampler-example PRIVATE TinyRHI)
-
-set(GLFW_BUILD_DOCS OFF)
-set(GLFW_BUILD_TESTS OFF)
-set(GLFW_BUILD_EXAMPLES OFF)
 target_link_libraries(TinyRHI-ImageSampler-example PUBLIC glfw)
-
-set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF)
-set(TINYGLTF_INSTALL OFF)
-set(TINYGLTF_INSTALL_VENDOR OFF)
 target_link_libraries(TinyRHI-ImageSampler-example PUBLIC tinygltf)
-
 target_link_libraries(TinyRHI-ImageSampler-example PUBLIC glm)
-
 add_test(NAME TinyRHITest2 COMMAND TinyRHI-ImageSampler-example)
+
+add_executable(TinyRHI-CompShader-example TinyRHI_computeShader_example.cpp)
+add_dependencies(TinyRHI-CompShader-example test_example_shader)
+target_link_libraries(TinyRHI-CompShader-example PRIVATE TinyRHI)
+target_link_libraries(TinyRHI-CompShader-example PUBLIC glfw)
+target_link_libraries(TinyRHI-CompShader-example PUBLIC tinygltf)
+target_link_libraries(TinyRHI-CompShader-example PUBLIC glm)
+add_test(NAME TinyRHITest3 COMMAND TinyRHI-CompShader-example)

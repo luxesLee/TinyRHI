@@ -81,7 +81,7 @@ namespace TinyRHI
 	public:
 		ComputePipelineVk(
 			const DeviceData& deviceData,
-			const ComputePipelineDesc& _computePipelineDesc);
+			ComputePipelineDesc _computePipelineDesc);
 
 		void Bind(vk::CommandBuffer cmdBuffer)
 		{
@@ -98,10 +98,15 @@ namespace TinyRHI
 			return pipeline.get();
 		}
 
+		auto& PipelineDescHandle()
+		{
+			return computePipelineDesc;
+		}
+
 	private:
 		vk::UniquePipeline pipeline;
 		vk::PipelineLayout pipelineLayout;
-		const ComputePipelineDesc& computePipelineDesc;
+		ComputePipelineDesc computePipelineDesc;
 	};
 
 }

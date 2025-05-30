@@ -108,7 +108,7 @@ GraphicsPipelineVk::GraphicsPipelineVk(
 
 ComputePipelineVk::ComputePipelineVk(
     const DeviceData& deviceData,
-    const ComputePipelineDesc& _computePipelineDesc)
+    ComputePipelineDesc _computePipelineDesc)
     : computePipelineDesc(_computePipelineDesc)
 {
     PipelineLayoutVk* vkPipelineLayout = dynamic_cast<PipelineLayoutVk*>(computePipelineDesc.pipelineLayout);

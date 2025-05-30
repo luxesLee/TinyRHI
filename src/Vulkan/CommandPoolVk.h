@@ -1,9 +1,13 @@
 #pragma once
 #include "HeaderVk.h"
+#include "CommandBufferVk.h"
+#include <queue>
+#include <unordered_map>
 
 namespace TinyRHI
 {
 
+#define MAX_COMMANDS_NUM 20
     class CommandPoolManager
     {
     public:
@@ -17,42 +21,77 @@ namespace TinyRHI
             commandPool = deviceData.logicalDevice.createCommandPoolUnique(commandPoolCreateInfo);
 
             auto allocInfo = vk::CommandBufferAllocateInfo()
-                .setCommandPool(commandPool.get())
-                .setCommandBufferCount(2);
+                .setCommandBufferCount(MAX_COMMANDS_NUM)
+                .setCommandPool(commandPool.get());
             auto cmdBufferTmpArray = deviceData.logicalDevice.allocateCommandBuffersUnique(allocInfo);
-            cmdBufferTmp[0] = std::move(cmdBufferTmpArray[0]);
-            cmdBufferTmp[1] = std::move(cmdBufferTmpArray[1]);
+            for(Uint i = 0; i < MAX_COMMANDS_NUM; i++)
+            {
+                idleCmdBuffersQueue.push(new CommandBufferVk(deviceData, std::move(cmdBufferTmpArray[i])));
+            }
         }
 
-        void SubmitCmdBuffer(
-            Uint index,
-            const std::vector<vk::Semaphore>& waitSemaphores,
-            const std::vector<vk::Semaphore>& signalSemaphores,
-            const std::optional<vk::PipelineStageFlags>& waitStages,
-            const std::optional<vk::Fence> fence)
+        CommandBufferVk* GetCmdBuffer()
         {
-            vk::SubmitInfo submitInfo = vk::SubmitInfo()
-                .setCommandBufferCount(1)
-                .setPCommandBuffers(&(cmdBufferTmp[index].get()))
-                .setWaitSemaphoreCount(waitSemaphores.size())
-                .setPWaitSemaphores(waitSemaphores.data())
-                .setSignalSemaphoreCount(signalSemaphores.size())
-                .setPSignalSemaphores(signalSemaphores.data())
-                ;
-
-            if(waitStages.has_value())
+            auto GetIdleCmdBuffer = [&]() ->CommandBufferVk*
             {
-                submitInfo.setPWaitDstStageMask(&waitStages.value());
+                if(idleCmdBuffersQueue.size() > 0)
+                {
+                    auto cmdBuffer = idleCmdBuffersQueue.front();
+                    idleCmdBuffersQueue.pop();
+                    activeCmdBuffersSet[cmdBuffer->Hash()] = cmdBuffer;
+                    return cmdBuffer;
+                }
+                return nullptr;
+            };
+
+            if(CommandBufferVk* cmdBuffer = GetIdleCmdBuffer())
+            {
+                return cmdBuffer;
             }
 
-            deviceData.graphicsQueue.submit(submitInfo, fence.has_value() ? fence.value() : VK_NULL_HANDLE);
+            if(submitCmdBuffersSet.size() > 0)
+            {
+                for (auto it = submitCmdBuffersSet.begin(); it != submitCmdBuffersSet.end();)
+                {
+                    auto& [key, val] = *it;
+                    if (val && val->QueryComplete())
+                    {
+                        val->Reset();
+                        idleCmdBuffersQueue.push(val);
+                        it = submitCmdBuffersSet.erase(it);
+                    }
+                    else
+                    {
+                        it++;
+                    }
+                }
+            }
 
-            // activeBuffers
+            if(CommandBufferVk* cmdBuffer = GetIdleCmdBuffer())
+            {
+                return cmdBuffer;
+            }
+            
+            auto allocInfo = vk::CommandBufferAllocateInfo()
+                .setCommandBufferCount(MAX_COMMANDS_NUM)
+                .setCommandPool(commandPool.get());
+            auto cmdBufferTmpArray = deviceData.logicalDevice.allocateCommandBuffersUnique(allocInfo);
+            for(Uint i = 0; i < MAX_COMMANDS_NUM; i++)
+            {
+                idleCmdBuffersQueue.push(new CommandBufferVk(deviceData, std::move(cmdBufferTmpArray[i])));
+            }
+
+            return GetIdleCmdBuffer();
         }
 
-        vk::CommandBuffer GetCmdBuffer(Uint index)
+        void SubmitCmdBuffer(CommandBufferVk* cmdBuffer, vk::Queue queue)
         {
-            return cmdBufferTmp[index].get();
+            assert(activeCmdBuffersSet.contains(cmdBuffer->Hash()));
+
+            activeCmdBuffersSet.erase(cmdBuffer->Hash());
+            submitCmdBuffersSet[cmdBuffer->Hash()] = cmdBuffer;
+
+            cmdBuffer->Submit(queue);
         }
 
         auto& CmdPoolHandle()
@@ -63,9 +102,10 @@ namespace TinyRHI
     private:
         const DeviceData& deviceData;
         vk::UniqueCommandPool commandPool;
-        std::vector<vk::UniqueCommandBuffer> cmdBuffers;
-        std::vector<vk::CommandBuffer> activeBuffers;
-        vk::UniqueCommandBuffer cmdBufferTmp[2];
+
+        std::queue<CommandBufferVk*> idleCmdBuffersQueue;
+        std::unordered_map<Uint32, CommandBufferVk*> activeCmdBuffersSet;
+        std::unordered_map<Uint32, CommandBufferVk*> submitCmdBuffersSet;
     };
 
 } // namespace TinyRHI

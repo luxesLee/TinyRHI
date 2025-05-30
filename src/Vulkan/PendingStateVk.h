@@ -224,11 +224,27 @@ namespace TinyRHI
         {
         }
 
+        void Reset()
+        {
+            PendingStateVk::Reset();
+            currentPipeline = nullptr;
+        }
+
         Bool SetPipeline(ComputePipelineVk* newPipeline)
         {
             if(currentPipeline != newPipeline)
             {
                 currentPipeline = newPipeline;
+                auto& pipelineDesc = currentPipeline->PipelineDescHandle();
+                PipelineLayoutVk* vkPipelineLayout = dynamic_cast<PipelineLayoutVk*>(pipelineDesc.pipelineLayout);
+                if(vkPipelineLayout)
+                {
+                    auto& dsVkArray = vkPipelineLayout->DSLayoutHandle();
+                    for(dsNum = 0; dsNum < dsVkArray.size() && dsNum < MaxDescriptorSetCount; dsNum++)
+                    {
+                        dsArray[dsNum] = &dsPool->GetDescriptorSet(&dsVkArray[dsNum])->DescriptorSetHandle();
+                    }
+                }
                 return true;
             }
             return false;

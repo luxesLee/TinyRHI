@@ -77,6 +77,8 @@ namespace TinyRHI
 		virtual IRHIHandle* SetGraphicsPipeline(const GfxSetting& gfxSetting);
 		virtual IRHIHandle* SetComputePipeline();
 
+		virtual IRHIHandle* SetTransition(ITransition* trans) {return this;};
+
 		virtual IRHIHandle* SetDefaultAttachments(const AttachmentDesc &attachmentDesc);
 		virtual IRHIHandle* SetColorAttachments(ITexture* texture, const AttachmentDesc& attachmentDesc);
 		virtual IRHIHandle* SetDepthAttachment(ITexture* texture, const AttachmentDesc& attachmentDesc);
@@ -135,7 +137,7 @@ namespace TinyRHI
 
 		std::unique_ptr<CommandPoolManager> cmdPoolManager;
 
-		vk::CommandBuffer currentCmd;
+		CommandBufferVk* currentVkCmd;
 
 		Bool bCurrentGfx;
 		std::unique_ptr<GfxPendingStateVk> pGfxPending;
