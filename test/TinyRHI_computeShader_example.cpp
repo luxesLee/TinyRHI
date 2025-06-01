@@ -84,7 +84,6 @@ int main()
 
     std::vector<Particle> particles(PARTICLE_COUNT);
     ProduceParticle(particles);
-    Uint curInputStorageBufferIndex = 0;
     TinyRHI::IBuffer* pParticleStorageBuffer[2];
     pParticleStorageBuffer[0] = pHandle->CreateBufferWithData(
         TinyRHI::BufferDesc
@@ -112,7 +111,6 @@ int main()
             .bStaging = true,
         });
 
-    float lastFrameTime = 0.0f;
     TinyRHI::IBuffer* pUniformBuffer = pHandle->CreateBuffer(
         TinyRHI::BufferDesc
         {
@@ -183,15 +181,15 @@ int main()
         },
     };
 
-    double lastTime = glfwGetTime();
-
+    double currentTime, lastTime = glfwGetTime();
+    Uint curInputStorageBufferIndex = 0;
     while(!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
-        double currentTime = glfwGetTime();
-        lastFrameTime = (currentTime - lastTime) * 1000.0;
-        ubo.deltaTime = lastFrameTime * 2.0f;
+        currentTime = glfwGetTime();
+        lastTime = (currentTime - lastTime) * 1000.0;
+        ubo.deltaTime = lastTime * 2.0f;
         lastTime = currentTime;
 
         pHandle->
