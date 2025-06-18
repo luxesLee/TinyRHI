@@ -32,43 +32,22 @@ IShader* HandleOgl::CreateComputeShader(const ShaderDesc &shaderDesc)
     return new ShaderOgl<IShader::Stage::Compute>(shaderDesc);
 }
 
-IRHIHandle* TinyRHI::HandleOgl::DrawPrimitive(Uint32 vertexCount, Uint32 firstVertex)
+IRHIHandle* HandleOgl::SetViewport(Extent2D minExt, Extent2D maxExt)
 {
+    glViewport(minExt.width, minExt.height, maxExt.width - minExt.width, maxExt.height - minExt.height);
     return this;
 }
 
-IRHIHandle* TinyRHI::HandleOgl::DrawPrimitiveIndirect(IBuffer *argumentBuffer, Uint32 argumentOffset)
+IRHIHandle* HandleOgl::SetViewport(Extent3D minExt, Extent3D maxExt)
 {
+    glViewport(minExt.width, minExt.height, maxExt.width - minExt.width, maxExt.height - minExt.height);
     return this;
 }
 
-IRHIHandle* TinyRHI::HandleOgl::DrawIndexPrimitive(IBuffer *indexBuffer, Uint32 indexCount, Uint32 firstIndex, Int32 vertOffset)
+IRHIHandle* HandleOgl::SetScissor(Extent2D minExt, Extent2D maxExt)
 {
-    return this;
-}
+    
 
-IRHIHandle* HandleOgl::Dispatch(Uint32 threadGroupCountX, Uint32 threadGroupCountY, Uint32 threadGroupCountZ)
-{
-    glDispatchCompute(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
-    return this;
-}
-
-IRHIHandle* HandleOgl::SetSamplerTexture(ITexture *texture, IShader::Stage stage, Uint setId, Uint bindingId)
-{
-    return this;
-}
-
-IRHIHandle* HandleOgl::SetStorageTexture(ITexture *texture, IShader::Stage stage, Uint setId, Uint bindingId)
-{
-    return this;
-}
-
-IRHIHandle* HandleOgl::SetStorageBuffer(IBuffer *buffer, IShader::Stage stage, Uint setId, Uint bindingId)
-{
-    return this;
-}
-
-IRHIHandle* HandleOgl::SetUniformBuffer(IBuffer *Buffer, IShader::Stage stage, Uint setId, Uint bindingId)
-{
+    glScissor(minExt.width, minExt.height, maxExt.width - minExt.width, maxExt.height - minExt.height);
     return this;
 }

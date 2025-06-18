@@ -5,7 +5,7 @@ struct GLFWwindow;
 
 namespace TinyRHI
 {    
-    class RHIFactory
+    class RHIHandleFactory
     {
     public:
         static IRHIHandle* getHandle(GLFWwindow* window);

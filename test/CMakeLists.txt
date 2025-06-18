@@ -63,7 +63,6 @@ target_link_libraries(TinyRHI-min-example PRIVATE TinyRHI)
 target_link_libraries(TinyRHI-min-example PUBLIC glfw)
 add_test(NAME TinyRHITest COMMAND TinyRHI-min-example)
 
-
 add_executable(TinyRHI-ImageSampler-example TinyRHI_imageSampler_example.cpp)
 add_dependencies(TinyRHI-ImageSampler-example test_example_shader)
 target_link_libraries(TinyRHI-ImageSampler-example PRIVATE TinyRHI)

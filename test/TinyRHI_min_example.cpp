@@ -6,7 +6,7 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-#include "Test.h"
+#include "RHIHandleFactory.h"
 #include "IBuffer.h"
 
 static std::vector<char> readFile(const std::string& filename) {
@@ -39,7 +39,7 @@ int main()
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(1024, 1024, "Test_Mini_Example", nullptr, nullptr);
-    TinyRHI::IRHIHandle* pHandle = TinyRHI::RHIFactory::getHandle(window);
+    TinyRHI::IRHIHandle* pHandle = TinyRHI::RHIHandleFactory::getHandle(window);
 
     TinyRHI::AttachmentDesc attachmentDesc
     {

@@ -6,8 +6,11 @@ namespace TinyRHI
 {
     class FramebufferOgl : public IFramebuffer
     {
-    
-
+    public:
+        FramebufferOgl()
+        {
+            
+        }
 
     private:
         GLuint framebufferId;

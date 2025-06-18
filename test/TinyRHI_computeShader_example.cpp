@@ -10,7 +10,7 @@
 #include "glm/glm.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Test.h"
+#include "RHIHandleFactory.h"
 #include "IBuffer.h"
 
 const uint32_t PARTICLE_COUNT = 8192;
@@ -70,7 +70,7 @@ int main()
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(1024, 1024, "Test_Mini_Example", nullptr, nullptr);
-    TinyRHI::IRHIHandle* pHandle = TinyRHI::RHIFactory::getHandle(window);
+    TinyRHI::IRHIHandle* pHandle = TinyRHI::RHIHandleFactory::getHandle(window);
 
     TinyRHI::AttachmentDesc attachmentDesc
     {

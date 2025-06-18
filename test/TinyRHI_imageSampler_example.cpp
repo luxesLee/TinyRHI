@@ -12,7 +12,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include "Test.h"
+#include "RHIHandleFactory.h"
 #include "IBuffer.h"
 
 static std::vector<char> readFile(const std::string& filename) {
@@ -69,7 +69,7 @@ int main()
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(1024, 1024, "Test_ImageSampler_Example", nullptr, nullptr);
-    TinyRHI::IRHIHandle* pHandle = TinyRHI::RHIFactory::getHandle(window);
+    TinyRHI::IRHIHandle* pHandle = TinyRHI::RHIHandleFactory::getHandle(window);
 
     TinyRHI::AttachmentDesc attachmentDesc 
     {
