@@ -1,3 +1,5 @@
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "PendingStateVk.h"
 #include "BufferVk.h"
 #include "ImageViewVk.h"
@@ -124,3 +126,5 @@ void ComputePendingStateVk::PrepareDispatch()
         }
     }
 }
+
+#endif

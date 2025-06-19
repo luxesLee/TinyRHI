@@ -1,5 +1,8 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include <memory>
+#include "IRHIHandle.h"
 #include "HeaderVk.h"
 #include "BufferVk.h"
 #include "SamplerVk.h"
@@ -207,3 +210,5 @@ namespace TinyRHI
 	};
 
 }
+
+#endif

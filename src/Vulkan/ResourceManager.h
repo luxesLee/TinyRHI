@@ -1,3 +1,4 @@
+#ifdef RHI_SUPPORT_VULKAN
 
 namespace TinyRHI
 {
@@ -11,3 +12,5 @@ namespace TinyRHI
 
     };
 } // namespace TinyRHI
+
+#endif

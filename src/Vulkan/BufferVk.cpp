@@ -1,3 +1,5 @@
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "BufferVk.h"
 
 using namespace TinyRHI;
@@ -80,3 +82,4 @@ void BufferVk::SetBufferData(void *data, Uint32 dataSize, Uint32 offset)
     }
 }
 
+#endif

@@ -1,4 +1,6 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "IRHIHandle.h"
 #include "HeaderVk.h"
 #include "CommandPoolVk.h"
@@ -45,6 +47,7 @@ namespace TinyRHI
 #endif
 
 	public:
+		virtual DeviceData* GetDeviceData();
         // 
         // ------------------------------------------------------------------------------------------------
 		
@@ -148,3 +151,5 @@ namespace TinyRHI
 
 
 } // namespace TinyRHI
+
+#endif

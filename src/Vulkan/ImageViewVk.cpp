@@ -1,3 +1,5 @@
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "ImageViewVk.h"
 
 using namespace TinyRHI;
@@ -138,3 +140,5 @@ ImageViewVk::ImageViewVk(const DeviceData &deviceData, ImageDesc imageDesc, vk::
         .setSubresourceRange(subresourceRange);
     imageView = deviceData.logicalDevice.createImageViewUnique(imageViewInfo);
 }
+
+#endif

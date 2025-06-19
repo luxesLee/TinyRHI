@@ -1,4 +1,6 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "ITransition.h"
 #include "HeaderVk.h"
 
@@ -14,3 +16,5 @@ namespace TinyRHI
     };
 
 } // namespace TinyRHI
+
+#endif

@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(SUPPORT_OPENGL "Use OpenGL" OFF)
 option(SUPPORT_VULKAN "Use Vulkan" ON)
-option(TEST_EXAMPLE "Build test example" ON)
+option(TEST_EXAMPLE "Build test example" OFF)
 option(DEBUG_MODE "Debug Mode" OFF)
 
 if(MSVC)

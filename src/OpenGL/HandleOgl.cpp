@@ -1,3 +1,5 @@
+#ifdef RHI_SUPPORT_OPENGL
+
 #include <iostream>
 #include "HandleOgl.h"
 #include "ShaderOgl.h"
@@ -51,3 +53,5 @@ IRHIHandle* HandleOgl::SetScissor(Extent2D minExt, Extent2D maxExt)
     glScissor(minExt.width, minExt.height, maxExt.width - minExt.width, maxExt.height - minExt.height);
     return this;
 }
+
+#endif

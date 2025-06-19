@@ -1,5 +1,8 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include <vulkan/vulkan.hpp>
+#include "IRHIHandle.h"
 #include "IBuffer.h"
 #include "IFramebuffer.h"
 #include "IImageView.h"
@@ -10,28 +13,6 @@
 
 namespace TinyRHI
 {
-	struct DeviceData
-	{
-		struct
-		{
-			vk::PhysicalDevice physicalDevice = VK_NULL_HANDLE;
-			vk::Device logicalDevice = VK_NULL_HANDLE;
-
-			vk::Queue graphicsQueue = VK_NULL_HANDLE;
-			vk::Queue presentQueue = VK_NULL_HANDLE;
-			vk::Queue computeQueue = VK_NULL_HANDLE;
-
-			struct QueueFamilyIndices
-			{
-				uint32_t graphicsFamilyIndex;
-				uint32_t presentFamilyIndex;
-				uint32_t computeFamilyIndex;
-			} queueFamilyIndices;
-
-			vk::CommandPool commandPool = VK_NULL_HANDLE;
-		};
-	};
-
 	inline vk::CommandBuffer BeginSingleTimeCommands(const DeviceData& deviceData)
 	{
 		auto cmdBufferAllocInfo = vk::CommandBufferAllocateInfo()
@@ -472,3 +453,5 @@ namespace TinyRHI
 	}
 
 }
+
+#endif

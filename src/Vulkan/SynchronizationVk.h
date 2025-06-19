@@ -1,4 +1,6 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "ISynchronization.h"
 #include <vulkan/vulkan.hpp>
 
@@ -15,3 +17,5 @@ namespace TinyRHI
     };
 
 } // namespace TinyRHI
+
+#endif

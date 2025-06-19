@@ -1,3 +1,5 @@
+#ifdef RHI_SUPPORT_VULKAN
+
 #include <iostream>
 #include <set>
 #include <cassert>
@@ -301,14 +303,14 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkHandle::DebugMessageCallback(VkDebugUtilsMessag
 }
 #endif
 
-
-
-
-
-
-
-
-
+DeviceData* VkHandle::GetDeviceData()
+{
+	if(deviceData.descriptorPool == vk::DescriptorPool())
+	{
+		deviceData.descriptorPool = pGfxPending->GetDescriptorPool();
+	}
+    return &deviceData;
+}
 
 IShader *VkHandle::CreateVertexShader(const ShaderDesc &shaderDesc)
 {
@@ -814,3 +816,5 @@ IRHIHandle* VkHandle::CopyImageToImage(IImageView *srcImageView, IImageView *dst
 	}
 	return this;
 }
+
+#endif

@@ -1,4 +1,5 @@
 #pragma once
+#ifdef RHI_SUPPORT_OPENGL
 #include "glad/glad.h"
 #include "IFramebuffer.h"
 
@@ -17,3 +18,4 @@ namespace TinyRHI
     };
 
 } // namespace TinyRHI
+#endif

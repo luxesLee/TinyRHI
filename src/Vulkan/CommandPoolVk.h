@@ -1,4 +1,6 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "HeaderVk.h"
 #include "CommandBufferVk.h"
 #include <queue>
@@ -109,3 +111,5 @@ namespace TinyRHI
     };
 
 } // namespace TinyRHI
+
+#endif

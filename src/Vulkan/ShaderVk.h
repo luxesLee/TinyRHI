@@ -1,5 +1,8 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "HeaderVk.h"
+#include "IRHIHandle.h"
 #include "IShader.h"
 #include "UniqueHash.h"
 
@@ -47,3 +50,5 @@ namespace TinyRHI
 
 	
 }
+
+#endif

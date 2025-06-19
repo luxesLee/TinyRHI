@@ -1,5 +1,8 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include <cassert>
+#include "IRHIHandle.h"
 #include "PipelineVk.h"
 #include "DescriptorSetPoolVk.h"
 #include "ImageViewVk.h"
@@ -21,6 +24,11 @@ namespace TinyRHI
             {
                 writerDirty[i] = false;
             }
+        }
+
+        vk::DescriptorPool GetDescriptorPool()
+        {
+            return dsPool->GetPool();
         }
 
         void SetCmdBuffer(vk::CommandBuffer cmdBuffer)
@@ -262,3 +270,5 @@ namespace TinyRHI
     };
 
 }
+
+#endif

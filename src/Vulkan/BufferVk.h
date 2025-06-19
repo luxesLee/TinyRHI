@@ -1,4 +1,6 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+#include "IRHIHandle.h"
 #include "HeaderVk.h"
 #include "IBuffer.h"
 #include "UniqueHash.h"
@@ -54,3 +56,5 @@ namespace TinyRHI
 		void* mappedDataPtr;
 	};
 }
+
+#endif

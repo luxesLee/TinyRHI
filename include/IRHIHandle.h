@@ -10,11 +10,43 @@
 #include "IFramebuffer.h"
 #include "ITransition.h"
 
+#ifdef RHI_SUPPORT_VULKAN
+#include "vulkan/vulkan.hpp"
+#endif
+
 namespace TinyRHI
 {
+	struct DeviceData
+	{
+		#ifdef RHI_SUPPORT_VULKAN
+		struct
+		{
+			vk::PhysicalDevice physicalDevice = VK_NULL_HANDLE;
+			vk::Device logicalDevice = VK_NULL_HANDLE;
+
+			vk::Queue graphicsQueue = VK_NULL_HANDLE;
+			vk::Queue presentQueue = VK_NULL_HANDLE;
+			vk::Queue computeQueue = VK_NULL_HANDLE;
+
+			struct QueueFamilyIndices
+			{
+				uint32_t graphicsFamilyIndex;
+				uint32_t presentFamilyIndex;
+				uint32_t computeFamilyIndex;
+			} queueFamilyIndices;
+
+			vk::CommandPool commandPool = VK_NULL_HANDLE;
+			vk::DescriptorPool descriptorPool = VK_NULL_HANDLE;
+		};
+		#elif RHI_SUPPORT_OPENGL
+
+		#endif
+	};
+
     class IRHIHandle
     {
     public:
+		virtual DeviceData* GetDeviceData() = 0;
 
         // 
         // ------------------------------------------------------------------------------------------------

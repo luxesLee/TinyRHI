@@ -1,3 +1,5 @@
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "RenderResourceVkManager.h"
 
 using namespace TinyRHI;
@@ -168,5 +170,5 @@ RenderPassVk* RenderResourceVkManager::GetCurrentRenderPass()
     return renderPass.get();
 }
 
-
+#endif
 

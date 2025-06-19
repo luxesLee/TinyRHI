@@ -1,4 +1,6 @@
 #pragma once
+#ifdef RHI_SUPPORT_OPENGL
+
 #include "IRHIHandle.h"
 
 class GLFWwindow;
@@ -89,3 +91,5 @@ namespace TinyRHI
 		virtual IRHIHandle* CopyImageToImage(IImageView* srcImageView, IImageView* dstImageView) = 0;
     };
 }
+
+#endif

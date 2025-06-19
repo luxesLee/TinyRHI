@@ -1,4 +1,6 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "HeaderVk.h"
 
 namespace TinyRHI
@@ -52,3 +54,5 @@ namespace TinyRHI
 		vk::UniqueSampler sampler;
 	};
 }
+
+#endif

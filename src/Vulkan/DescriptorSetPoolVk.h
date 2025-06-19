@@ -1,5 +1,8 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "HeaderVk.h"
+#include "IRHIHandle.h"
 #include <unordered_map>
 #include <tuple>
 #include <cassert>
@@ -310,6 +313,11 @@ namespace TinyRHI
 			return vkDescriptorSet.get();
 		}
 
+		vk::DescriptorPool GetPool()
+		{
+			return descriptorPool.get();
+		}
+
 	private:
 		const DeviceData& deviceData;
 		vk::UniqueDescriptorPool descriptorPool;
@@ -318,3 +326,5 @@ namespace TinyRHI
 	};
 
 }
+
+#endif

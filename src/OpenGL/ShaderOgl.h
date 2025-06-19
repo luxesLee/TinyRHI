@@ -1,4 +1,6 @@
 #pragma once
+#ifdef RHI_SUPPORT_OPENGL
+
 #include <string>
 #include <iostream>
 #include "glad/glad.h"
@@ -144,3 +146,5 @@ namespace TinyRHI
         GLuint ID;
     };
 } // namespace TinyRHI
+
+#endif

@@ -1,3 +1,5 @@
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "DescriptorSetPoolVk.h"
 
 using namespace TinyRHI;
@@ -28,3 +30,5 @@ DescriptorSetPoolVk::DescriptorSetPoolVk(
         .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet | vk::DescriptorPoolCreateFlagBits::eUpdateAfterBind);	// �ͷ�poolʱ�Զ��ͷ���Ӧset
     descriptorPool = deviceData.logicalDevice.createDescriptorPoolUnique(poolCreateInfo);
 }
+
+#endif

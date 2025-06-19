@@ -1,4 +1,6 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "HeaderVk.h"
 #include "UniqueHash.h"
 
@@ -97,3 +99,5 @@ namespace TinyRHI
     };
 
 } // namespace TinyRHI
+
+#endif

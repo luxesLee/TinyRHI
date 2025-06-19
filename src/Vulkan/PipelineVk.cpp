@@ -1,3 +1,5 @@
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "PipelineVk.h"
 
 using namespace TinyRHI;
@@ -124,3 +126,5 @@ ComputePipelineVk::ComputePipelineVk(
 
     pipeline = deviceData.logicalDevice.createComputePipelineUnique(nullptr, pipelineCreateInfo).value;
 }
+
+#endif

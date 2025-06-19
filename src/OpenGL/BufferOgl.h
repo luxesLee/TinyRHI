@@ -1,4 +1,5 @@
 #pragma once
+#ifdef RHI_SUPPORT_OPENGL
 #include "glad/glad.h"
 #include "IBuffer.h"
 
@@ -18,3 +19,5 @@ namespace TinyRHI
     };
 
 } // namespace TinyRHI
+
+#endif

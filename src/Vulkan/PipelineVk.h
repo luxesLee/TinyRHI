@@ -1,4 +1,7 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
+#include "IRHIHandle.h"
 #include "HeaderVk.h"
 #include "RenderPassVk.h"
 #include "ShaderVk.h"
@@ -110,3 +113,5 @@ namespace TinyRHI
 	};
 
 }
+
+#endif

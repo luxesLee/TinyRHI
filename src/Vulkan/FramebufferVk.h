@@ -1,5 +1,8 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include "HeaderVk.h"
+#include "IRHIHandle.h"
 #include "RenderPassVk.h"
 #include "ImageViewVk.h"
 
@@ -49,3 +52,5 @@ namespace TinyRHI
 		RenderPassVk* renderPass;
 	};
 }
+
+#endif

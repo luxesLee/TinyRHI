@@ -1,5 +1,8 @@
 #pragma once
+#ifdef RHI_SUPPORT_VULKAN
+
 #include <unordered_map>
+#include "IRHIHandle.h"
 #include "HeaderVk.h"
 #include "FramebufferVk.h"
 #include "RenderPassVk.h"
@@ -119,3 +122,5 @@ namespace TinyRHI
     };
 
 } // namespace TinyRHI
+
+#endif
